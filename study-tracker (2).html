@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<meta name="theme-color" content="#0b0b0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Study Tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+  <nav id="sidebar">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="logo"><img src="assets/icon.png" alt="Study Tracker" width="30" height="30"></div>
+        <div class="brand-text">
+          <h1>Study Tracker</h1>
+          <span class="brand-tagline">Enfócate y mide</span>
+        </div>
+      </div>
+
+      <div class="nav-links" id="navLinks">
+        <div class="nav-active-pill" id="navActivePill" aria-hidden="true"></div>
+        <button type="button" data-view="timer" class="nav-item active" aria-current="page">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg></span>
+          <span class="nav-label">Timer</span>
+        </button>
+        <button type="button" data-view="dashboard" class="nav-item">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg></span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button type="button" data-view="materias" class="nav-item">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+          <span class="nav-label">Materias</span>
+        </button>
+        <button type="button" data-view="ajustes" class="nav-item">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+          <span class="nav-label">Ajustes</span>
+        </button>
+      </div>
+
+      <div class="nav-footer">
+        <button type="button" class="nav-toggle" id="navToggleBtn" title="Contraer/expandir menú" aria-label="Contraer menú lateral">
+          <span class="nav-toggle-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </span>
+          <span class="nav-toggle-label">Contraer</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+  <main>
+
+    <section id="view-timer">
+      <div class="timer-wrap">
+        <div class="subject-select-wrap" id="subjectDropdown">
+          <select id="subjectSelect" class="sr-only-select"><option value="">Selecciona una materia</option></select>
+          <button type="button" class="subject-select-btn" id="subjectSelectBtn">
+            <span class="subject-select-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </span>
+            <span class="subject-select-label" id="subjectSelectLabel">Selecciona una materia</span>
+            <svg class="subject-select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="subject-select-panel hidden" id="subjectSelectPanel"></div>
+        </div>
+        <p class="subject-context hidden" id="subjectContext"></p>
+
+        <div class="subject-progress" id="subjectProgress">
+          <div class="subject-progress-row">
+            <span class="subject-progress-label" id="subjectProgressLabel">Te faltan 4 bloques para el objetivo diario</span>
+            <span class="subject-progress-pct" id="subjectProgressPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="subjectProgressFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="timer-circle" id="timerCircleWrap">
+          <div class="timer-halo" aria-hidden="true"></div>
+          <svg viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="timerRingGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#f4f4f5"/>
+                <stop offset="1" stop-color="#a1a1aa"/>
+              </linearGradient>
+              <linearGradient id="timerRingBreak" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#34d399"/>
+                <stop offset="1" stop-color="#10b981"/>
+              </linearGradient>
+            </defs>
+            <circle class="bg" cx="60" cy="60" r="54"></circle>
+            <circle class="fg" id="timerRing" cx="60" cy="60" r="54"></circle>
+          </svg>
+          <div class="timer-text">
+            <div class="time" id="timeDisplay">25:00</div>
+            <div class="mode" id="modeDisplay">Enfoque</div>
+          </div>
+        </div>
+
+        <div class="time-adjust-row" id="timeAdjustRow">
+          <button class="adjust-btn" id="minus5Btn" title="Atrasar 5 min">−5</button>
+          <button class="adjust-btn" id="minus1Btn" title="Atrasar 1 min">−1</button>
+          <button class="adjust-btn" id="plus1Btn" title="Adelantar 1 min">+1</button>
+          <button class="adjust-btn" id="plus5Btn" title="Adelantar 5 min">+5</button>
+        </div>
+
+        <div class="cycle-track" id="cycleTrack"></div>
+
+        <div class="btn-row" id="mainBtnRow">
+          <button class="btn btn-primary" id="startBtn">Iniciar</button>
+          <button type="button" class="btn-reset" id="resetBtn">Reiniciar</button>
+        </div>
+
+        <div class="next-mode-wrap hidden" id="nextModeRow">
+          <button class="btn btn-primary" id="startNextBtn">Descansar</button>
+          <div class="next-mode-secondary">
+            <button type="button" class="btn-text" id="continueFocusBtn">Seguir estudiando</button>
+            <button type="button" class="btn-text" id="endSessionBtn">Terminar</button>
+          </div>
+        </div>
+
+        <div id="toast" class="toast hidden"></div>
+      </div>
+
+    </section>
+
+    <section id="view-dashboard" class="hidden">
+      <div class="dash-header">
+        <h2 style="margin:0">Dashboard</h2>
+        <span class="pill" id="todayDate"></span>
+      </div>
+
+      <div id="dashEmptyWrap" class="card hidden">
+        <div class="dash-empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+          </div>
+          <h3>Aún no hay datos que mostrar</h3>
+          <p>Crea tu primera materia y completa un pomodoro para empezar a ver tu progreso aquí.</p>
+          <button class="btn btn-primary" id="emptyStateGoSubjects">Crear mi primera materia</button>
+        </div>
+      </div>
+
+      <div id="dashContentWrap">
+        <div class="hero-stat card">
+          <div class="hero-main">
+            <p class="stat-label">Horas esta semana</p>
+            <p class="hero-number" id="statWeekHours">0.0h</p>
+            <p class="stat-delta up" id="statWeekDelta">—</p>
+          </div>
+          <div class="hero-side">
+            <button type="button" class="hero-mini hero-mini--streak hero-mini--clickable" id="streakCardBtn" aria-label="Ver detalle de racha">
+              <div class="hero-mini-glow" aria-hidden="true"></div>
+              <div class="hero-mini-icon">
+                <div class="hero-mini-halo" aria-hidden="true"></div>
+                <svg class="hero-streak-flame" viewBox="0 0 24 24" fill="url(#heroStreakFireGrad)" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="heroStreakFireGrad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#FFD166"/>
+                      <stop offset="0.4" stop-color="#FF6B6B"/>
+                      <stop offset="1" stop-color="#FF3B30"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M12 2C12 2 6 7 6 13C6 16.3137 8.68629 19 12 19C15.3137 19 18 16.3137 18 13C18 7 12 2 12 2ZM12 17.5C10.6193 17.5 9.5 16.3807 9.5 15C9.5 14.1627 9.91494 13.4215 10.5694 13.0031C11.4552 12.4369 12.5539 12.0298 12.5539 12.0298C12.5539 12.0298 12.0526 13.1257 12.0526 14.2857C12.0526 14.6802 12.3724 15 12.7669 15C13.1614 15 13.4812 14.6802 13.4812 14.2857C13.4812 13.7915 13.3857 13.3283 13.2188 12.9157C13.8821 13.3514 14.3464 14.1132 14.3464 15C14.3464 16.3807 13.3807 17.5 12 17.5Z"/>
+                </svg>
+              </div>
+              <div class="hero-mini-body">
+                <p class="hero-mini-label">Racha</p>
+                <p class="hero-mini-value" id="statStreak">0</p>
+                <p class="hero-mini-sub">Récord <span id="statStreakBest">0</span></p>
+              </div>
+            </button>
+            <div class="hero-mini hero-mini--total">
+              <div class="hero-mini-glow" aria-hidden="true"></div>
+              <div class="hero-mini-icon">
+                <div class="hero-mini-halo" aria-hidden="true"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>
+              </div>
+              <div class="hero-mini-body">
+                <p class="hero-mini-label">Total</p>
+                <p class="hero-mini-value" id="statTotalHours">0h</p>
+                <p class="hero-mini-sub">histórico</p>
+              </div>
+            </div>
+            <div class="hero-mini hero-mini--sessions">
+              <div class="hero-mini-glow" aria-hidden="true"></div>
+              <div class="hero-mini-icon">
+                <div class="hero-mini-halo" aria-hidden="true"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+              </div>
+              <div class="hero-mini-body">
+                <p class="hero-mini-label">Sesiones</p>
+                <p class="hero-mini-value" id="statSessions">0</p>
+                <p class="hero-mini-sub">completadas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dashSubjectFilterBadge" class="dash-subject-filter-badge hidden" aria-live="polite"></div>
+
+        <div class="dash-bottom-grid">
+          <div class="card" id="weekChartCard">
+            <p class="card-title card-title--week">
+              <span class="card-title-text">Minutos por día</span>
+              <span class="week-chart-title-actions">
+                <span class="week-compare-toggle" id="weekCompareToggle" role="group" aria-label="Modo de visualización semanal">
+                  <button type="button" class="week-toggle-btn active" id="weekBtnSolo" data-mode="solo" aria-pressed="true">Solo</button>
+                  <button type="button" class="week-toggle-btn" id="weekBtnCompare" data-mode="compare" aria-pressed="false">vs semanal</button>
+                </span>
+                <span class="week-nav">
+                  <button class="week-nav-btn" id="weekPrevBtn" title="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <span class="pill" id="weekRangeLabel">Esta semana</span>
+                  <button class="week-nav-btn" id="weekNextBtn" title="Semana siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </span>
+              </span>
+            </p>
+            <div id="weekChartWrap"></div>
+          </div>
+
+          <div class="card" id="heatmapCard">
+            <p class="card-title">
+              Consistencia de Estudio
+              <span class="week-nav">
+                <button class="week-nav-btn" id="heatmapPrevBtn" title="Periodo anterior" aria-label="Periodo anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                <span class="pill" id="heatmapPill">—</span>
+                <button class="week-nav-btn" id="heatmapNextBtn" title="Periodo siguiente" aria-label="Periodo siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+              </span>
+            </p>
+            <div id="heatmap-wrapper">
+              <div id="heatmap-content">
+                <div id="heatmap-months"></div>
+                <div id="heatmap-body">
+                  <div id="heatmap-day-labels"></div>
+                  <div id="heatmap-container"></div>
+                </div>
+              </div>
+              <div class="heatmap-legend" aria-hidden="true">
+                <span>Menos</span>
+                <span class="heatmap-legend-cell level-0"></span>
+                <span class="heatmap-legend-cell level-1"></span>
+                <span class="heatmap-legend-cell level-2"></span>
+                <span class="heatmap-legend-cell level-3"></span>
+                <span class="heatmap-legend-cell level-4"></span>
+                <span>Más</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card dd-card" id="diaDoradoCard">
+
+            <div class="dd-top">
+              <div class="dd-star-wrap">
+                <svg class="dd-star" viewBox="0 0 24 24" fill="url(#ddGoldGrad)" stroke="#FACC15" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <svg width="0" height="0" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="ddGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop stop-color="#FDE047" offset="0%"/>
+                      <stop stop-color="#EAB308" offset="50%"/>
+                      <stop stop-color="#A16207" offset="100%"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <button type="button" class="dd-share-btn" id="ddShareBtn" title="Compartir" aria-label="Compartir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+            </div>
+
+            <div class="dd-hero">
+              <h2 class="dd-day-name" id="ddDayName">—</h2>
+              <p class="dd-subline">Día Dorado <span class="dd-dot">•</span> Día más fuerte</p>
+              <div class="dd-tags">
+                <span class="dd-tag">Histórico</span>
+                <span class="dd-tag">Rendimiento</span>
+              </div>
+            </div>
+
+            <div class="dd-stats-row">
+              <div class="dd-stat">
+                <div class="dd-stat-main">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span id="ddAvgHours">—</span>
+                </div>
+                <span class="dd-stat-label">Media</span>
+              </div>
+              <div class="dd-stat-divider"></div>
+              <div class="dd-stat">
+                <div class="dd-stat-main">
+                  <svg class="dd-stat-icon--green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  <span id="ddTotalSessions">—</span>
+                </div>
+                <span class="dd-stat-label">Sesiones</span>
+              </div>
+              <div class="dd-stat-divider"></div>
+              <div class="dd-stat">
+                <div class="dd-stat-main">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  <span id="ddTopSubject">—</span>
+                </div>
+                <span class="dd-stat-label">Top Mat.</span>
+              </div>
+            </div>
+
+            <div class="dd-actions">
+              <button type="button" class="dd-btn-primary" id="ddAnalyzeBtn">
+                Analizar día
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </button>
+              <button type="button" class="dd-btn-icon" id="ddBookmarkBtn" title="Guardar" aria-label="Guardar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="card dd-card dd-card--mix" id="subjectMixCard">
+
+            <div class="dd-top">
+              <div class="dd-star-wrap dd-icon-wrap--mix">
+                <svg class="dd-star dd-star--mix" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                  <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                </svg>
+              </div>
+              <button type="button" class="dd-share-btn" id="smShareBtn" title="Compartir" aria-label="Compartir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+            </div>
+
+            <div class="sm-donut-zone">
+              <div class="sm-donut-wrap" id="smDonutWrap">
+                <svg id="smDonut" class="sm-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+                <div class="sm-donut-center">
+                  <span id="smCenterValue">—</span>
+                  <span class="sm-donut-center-label">total</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sm-stats-row" id="smStatsRow"></div>
+          </div>
+
+          <div class="card" id="peakHoursCard">
+            <div class="ph-header">
+              <div class="ph-header-left">
+                <div class="ph-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                  <p class="ph-title">Franja Horaria de Enfoque</p>
+                  <p class="ph-subtitle" id="phSubtitle">Distribución histórica</p>
+                </div>
+              </div>
+              <div class="ph-header-right">
+                <div class="ph-toggle">
+                  <button type="button" class="ph-toggle-btn active" id="phBtnHistoric" data-mode="historic">Histórico</button>
+                  <button type="button" class="ph-toggle-btn" id="phBtnToday" data-mode="today">Hoy</button>
+                </div>
+                <span class="ph-peak-badge" id="phPeakBadge">Sin datos</span>
+              </div>
+            </div>
+            <div class="dash-bar-chart">
+              <div class="dash-bars" id="phBars"></div>
+              <div class="dash-bar-axis">
+                <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+              </div>
+            </div>
+            <div class="ph-footer">
+              <span class="ph-foot-item" id="phFootLeft">Preferencia: <strong id="phPreference">—</strong></span>
+              <span class="ph-foot-item">Foco Máximo: <strong id="phPeakDetail">—</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+
+    <section id="view-materias" class="hidden">
+      <div class="dash-header">
+        <h2 style="margin:0">Materias</h2>
+      </div>
+
+      <nav class="materias-tabs" aria-label="Filtrar materias">
+        <button type="button" class="materias-tab active" data-tab="activas">Activas</button>
+        <button type="button" class="materias-tab" data-tab="completadas">Completadas</button>
+        <button type="button" class="materias-tab" data-tab="archivadas">Archivadas</button>
+      </nav>
+
+      <div id="subjectsEmptyWrap" class="card hidden">
+        <div class="dash-empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3>Aún no tienes materias</h3>
+          <p>Crea tu primera materia para empezar a organizar tus sesiones de estudio.</p>
+          <button class="btn btn-primary" id="emptyStateAddSubject">Crear mi primera materia</button>
+        </div>
+      </div>
+
+      <div id="subjectsTabEmptyWrap" class="card hidden" style="margin-bottom:16px">
+        <div class="dash-empty-state" style="padding:28px 20px">
+          <p style="margin:0;color:var(--text-dim);font-size:13px"></p>
+        </div>
+      </div>
+
+      <div id="subjectList" class="subjects-grid"></div>
+    </section>
+
+    <section id="view-ajustes" class="hidden">
+      <div class="settings-shell">
+        <div class="dash-header settings-header">
+          <div>
+            <h2 style="margin:0">Ajustes</h2>
+            <p class="settings-subtitle">Personaliza tu experiencia de estudio</p>
+          </div>
+        </div>
+
+        <div class="settings-grid-layout">
+
+          <div class="settings-column">
+            <div class="settings-section">
+              <div class="settings-section-head">
+                <span class="settings-section-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+                </span>
+                <p class="settings-section-title">Temporizador</p>
+              </div>
+              <div class="card settings-card">
+                <div class="settings-grid">
+                  <div class="field"><label>Enfoque (min)</label><input type="number" id="focusMinInput" value="25" min="1"></div>
+                  <div class="field"><label>Descanso corto (min)</label><input type="number" id="breakMinInput" value="5" min="1"></div>
+                  <div class="field"><label>Descanso largo (min)</label><input type="number" id="longBreakMinInput" value="15" min="1"></div>
+                  <div class="field"><label>Ciclos antes del descanso largo</label><input type="number" id="cyclesInput" value="4" min="1"></div>
+                  <div class="field" style="grid-column: 1 / -1"><label>Meta de pomodoros diarios</label><input type="number" id="dailyGoalInput" value="4" min="1"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-head">
+                <span class="settings-section-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </span>
+                <p class="settings-section-title">Notificaciones</p>
+              </div>
+              <div class="card settings-card">
+                <div class="field-toggle field-toggle--first">
+                  <div class="field-toggle-text">
+                    <p class="field-toggle-label">Descanso automático</p>
+                    <p class="field-toggle-desc">Inicia el descanso al terminar un pomodoro</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="autoStartBreakInput">
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </label>
+                </div>
+                <div class="field-toggle field-toggle--last">
+                  <div class="field-toggle-text">
+                    <p class="field-toggle-label">Notificaciones</p>
+                    <p class="field-toggle-desc">Avisa al terminar un bloque</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="notifyOnFinishInput">
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-column">
+            <div class="settings-section">
+              <div class="settings-section-head">
+                <span class="settings-section-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                </span>
+                <p class="settings-section-title">Sesiones y datos</p>
+              </div>
+              <div class="card settings-card settings-card--combined">
+                <div class="settings-combined-stack">
+                  <div class="settings-card-group">
+                    <div class="settings-card-group-head">
+                      <span class="settings-card-group-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      </span>
+                      <div class="settings-card-group-copy">
+                        <p class="settings-card-subtitle">Sesiones manuales</p>
+                        <p class="settings-card-desc">Añade sesiones pasadas o elimina el último registro si te equivocaste.</p>
+                      </div>
+                    </div>
+                    <div class="settings-actions settings-actions--pair">
+                      <button class="btn btn-secondary settings-action" id="addManualBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Añadir pomodoro
+                      </button>
+                      <button class="btn btn-danger settings-action" onclick="eliminarUltimoPomodoro()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        Borrar último
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-card-divider"></div>
+
+                  <div class="settings-card-group">
+                    <div class="settings-card-group-head">
+                      <span class="settings-card-group-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                      </span>
+                      <div class="settings-card-group-copy">
+                        <p class="settings-card-subtitle">Datos</p>
+                        <p class="settings-card-desc">Tus registros se guardan solo en este navegador. Exporta una copia para no perder tu progreso.</p>
+                      </div>
+                    </div>
+                    <div class="settings-actions settings-actions--pair">
+                      <button class="btn btn-secondary settings-action" id="exportDataBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                        Exportar
+                      </button>
+                      <button class="btn btn-secondary settings-action" id="importDataBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 9l5-5 5 5"/><path d="M12 4v12"/></svg>
+                        Importar
+                      </button>
+                      <input type="file" id="importDataInput" accept="application/json" class="hidden">
+                    </div>
+                    <div class="settings-danger-zone">
+                      <button class="btn btn-danger settings-wipe" id="wipeDataBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        Borrar todos los datos
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <button class="btn btn-primary settings-save" id="saveSettingsBtn">Guardar ajustes</button>
+
+      <div id="wipeDataModal" class="modal-overlay hidden">
+        <div class="modal-card">
+          <h3>¿Borrar todos los datos?</h3>
+          <p class="modal-text">Se eliminarán todas las materias, sesiones y ajustes guardados en este navegador.</p>
+          <p class="modal-warn">Esta acción no se puede deshacer. Considera exportar una copia antes de continuar.</p>
+          <div class="btn-row">
+            <button class="btn btn-danger" id="wipeDataConfirmBtn">Borrar todo</button>
+            <button class="btn btn-secondary" id="wipeDataCancelBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="manualModal" class="modal-overlay hidden">
+        <div class="modal-card">
+          <h3>Añadir pomodoro manual</h3>
+          <div class="field">
+            <label>Materia</label>
+            <select id="manualSubject"></select>
+          </div>
+          <div class="field">
+            <label>Duración (minutos)</label>
+            <input type="number" id="manualDuration" value="25" min="1">
+          </div>
+          <div class="field">
+            <label>Fecha y hora</label>
+            <input type="datetime-local" id="manualDatetime">
+          </div>
+          <div class="field">
+            <label>Notas (opcional)</label>
+            <textarea id="manualNotes" rows="2" placeholder="¿Qué estudiaste?"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="manualSaveBtn">Guardar sesión</button>
+            <button class="btn btn-secondary" id="manualCancelBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="subjectModal" class="modal-overlay hidden">
+  <div class="modal-card subject-modal" role="dialog" aria-labelledby="subjectModalTitle" aria-modal="true">
+    <header class="subject-modal-header">
+      <div class="subject-modal-header-text">
+        <h3 id="subjectModalTitle">Nueva materia</h3>
+      </div>
+      <button type="button" class="subject-modal-close" id="subjectModalCloseBtn" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <div class="subject-modal-body">
+      <section class="subject-modal-section">
+        <div class="field subject-modal-field">
+          <label for="subjectNameInput">Nombre</label>
+          <input type="text" id="subjectNameInput" placeholder="Ej. FMVA, Programación…" autocomplete="off">
+        </div>
+      </section>
+
+      <section class="subject-modal-section">
+        <p class="subject-modal-section-label">Objetivo</p>
+        <select id="subjectGoalTypeSelect" class="sr-only-select" tabindex="-1" aria-hidden="true">
+          <option value="time">Por tiempo</option>
+          <option value="units">Por unidades / módulos</option>
+          <option value="none">Sin objetivo (solo seguimiento)</option>
+        </select>
+        <div class="goal-type-pills" role="group" aria-label="Tipo de objetivo">
+          <button type="button" class="goal-type-pill" data-goal-type="time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Tiempo
+          </button>
+          <button type="button" class="goal-type-pill" data-goal-type="units">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Módulos
+          </button>
+          <button type="button" class="goal-type-pill" data-goal-type="none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Solo seguimiento
+          </button>
+        </div>
+
+        <div id="subjectGoalTimeFields" class="subject-modal-goal-panel">
+          <div class="field subject-modal-field">
+            <label>Periodo</label>
+            <div class="period-pills" role="group" aria-label="Periodo del objetivo">
+              <button type="button" class="period-pill" data-period="week">Semanal</button>
+              <button type="button" class="period-pill" data-period="day">Diario</button>
+            </div>
+            <select id="subjectGoalPeriodSelect" class="sr-only-select" tabindex="-1" aria-hidden="true">
+              <option value="week">Semanal</option>
+              <option value="day">Diario</option>
+            </select>
+          </div>
+          <div class="field subject-modal-field subject-modal-field--last">
+            <label for="subjectTargetInput">Meta (minutos)</label>
+            <input type="number" id="subjectTargetInput" placeholder="300" min="1" value="300">
+          </div>
+        </div>
+
+        <div id="subjectGoalUnitsFields" class="subject-modal-goal-panel hidden">
+          <div class="subject-modal-units-grid">
+            <div class="field subject-modal-field">
+              <label for="subjectUnitsTargetInput">Total</label>
+              <input type="number" id="subjectUnitsTargetInput" placeholder="15" min="1" value="15">
+            </div>
+                  <div class="field subject-modal-field">
+                    <label for="subjectUnitsCompletedInput">Completadas</label>
+                    <div class="subject-units-input-row">
+                      <button type="button" class="units-step-btn" id="subjectUnitsMinusBtn" aria-label="Quitar un módulo">−</button>
+                      <input type="number" id="subjectUnitsCompletedInput" placeholder="0" min="0" value="0">
+                      <button type="button" class="units-step-btn units-step-btn--plus" id="subjectUnitsPlusBtn" aria-label="Completar un módulo">+1</button>
+                    </div>
+                  </div>
+          </div>
+          <div class="field subject-modal-field subject-modal-field--last">
+            <label for="subjectUnitsLabelInput">Etiqueta</label>
+            <input type="text" id="subjectUnitsLabelInput" placeholder="módulos" value="módulos">
+          </div>
+        </div>
+
+        <p class="subject-modal-goal-hint" id="subjectGoalHint">Establece cuántos minutos quieres dedicar cada semana.</p>
+      </section>
+
+      <section class="subject-modal-section subject-modal-section--last">
+        <p class="subject-modal-section-label">Apariencia</p>
+        <div class="subject-modal-color-wrap">
+          <div class="color-picker subject-modal-color-picker" id="subjectColorPicker"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="subject-modal-footer">
+      <button type="button" class="btn btn-secondary" id="subjectCancelBtn">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="subjectSaveBtn">Guardar</button>
+    </footer>
+  </div>
+</div>
+
+<div id="deleteSubjectModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3>¿Eliminar "<span id="deleteSubjectName"></span>"?</h3>
+    <p id="deleteSubjectDetail" style="font-size:13px;color:var(--text-dim);margin:-8px 0 6px"></p>
+    <p style="font-size:13px;color:var(--red);margin:0 0 20px">Esta acción no se puede deshacer.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" id="deleteSubjectConfirmBtn">Eliminar materia</button>
+      <button class="btn btn-secondary" id="deleteSubjectCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="dayDetailOverlay" class="day-detail-overlay hidden">
+  <div class="day-detail-panel" id="dayDetailPanel">
+    <div class="day-detail-glow" aria-hidden="true"></div>
+
+    <div class="day-detail-topbar">
+      <button type="button" class="day-detail-back" id="dayDetailCloseBtn" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h3 class="day-detail-eyebrow" id="dayDetailTitle">Día</h3>
+      <div class="day-detail-spacer"></div>
+    </div>
+
+    <div class="day-detail-hero">
+      <p class="day-detail-hero-label">Tiempo enfocado</p>
+      <h2 class="day-detail-hero-time" id="dayDetailHeroTime">0m</h2>
+      <div class="day-detail-hero-meta">
+        <span class="day-detail-chip" id="dayDetailChipCount">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+          <span id="dayDetailCount">0</span> pomodoros
+        </span>
+        <span class="day-detail-chip" id="dayDetailChipAvg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+          <span id="dayDetailAvg">0m</span> / sesión
+        </span>
+      </div>
+    </div>
+
+    <div class="day-detail-section">
+      <div class="day-detail-section-head">
+        <p class="day-detail-section-title">Línea de tiempo</p>
+        <p class="day-detail-section-sub" id="dayDetailRange">—</p>
+      </div>
+      <div id="dayDetailTimeline" class="day-detail-timeline"></div>
+    </div>
+  </div>
+</div>
+
+<div id="streakModal" class="streak-modal hidden" role="dialog" aria-modal="true" aria-labelledby="streakView1Title">
+  <canvas id="streakSparksCanvas" class="streak-sparks-canvas" aria-hidden="true"></canvas>
+  <div class="streak-glow" aria-hidden="true"></div>
+
+  <div id="streakView1" class="streak-view streak-view--hero fade-in-up">
+    <div class="streak-view-inner">
+      <div class="streak-hero-block">
+        <div class="streak-hero-core floating">
+          <div class="streak-flame-wrap"></div>
+          <h1 class="streak-hero-number" id="streakHeroNumber">0</h1>
+        </div>
+        <p class="streak-hero-title" id="streakView1Title">Tu racha</p>
+      </div>
+      <div class="streak-view-actions">
+        <div class="streak-glass-panel streak-mini-panel" id="streakMiniWrap"></div>
+        <button type="button" class="streak-glass-btn" id="streakBtnContinue">
+          <span>Continuar</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="streakView2" class="streak-view streak-view--detail hidden is-hidden">
+    <div class="streak-detail-header">
+      <button type="button" class="streak-back-btn" id="streakBtnBack" aria-label="Cerrar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 class="streak-detail-heading">Racha</h2>
+      <div class="streak-detail-spacer"></div>
+    </div>
+    <div class="streak-view-inner streak-view-inner--detail">
+      <div class="streak-hero-block streak-hero-block--detail">
+        <div class="streak-hero-core floating">
+          <div class="streak-flame-wrap"></div>
+          <p class="streak-detail-number" id="streakDetailNumber">0</p>
+        </div>
+        <p class="streak-detail-label">Días de Racha</p>
+      </div>
+      <div class="streak-glass-panel streak-week-panel">
+        <div id="streakWeekWrap"></div>
+        <div class="streak-tip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff5252" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2C12 2 6 7 6 13C6 16.3137 8.68629 19 12 19C15.3137 19 18 16.3137 18 13C18 7 12 2 12 2Z"/></svg>
+          <p id="streakTipText"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+        console.warn('Service Worker no registrado:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
