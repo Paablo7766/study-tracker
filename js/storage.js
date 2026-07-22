@@ -237,12 +237,7 @@ function normalizeLoadedData(raw) {
   return raw;
 }
 
-export function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    const parsed = normalizeLoadedData(JSON.parse(raw));
-    return parsed;
-  }
+function createEmptyData() {
   return {
     subjects: [],
     sessions: [],
@@ -251,12 +246,46 @@ export function loadData() {
   };
 }
 
+export function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return normalizeLoadedData(JSON.parse(raw));
+  } catch (err) {
+    console.error('[storage] No se pudieron cargar los datos locales:', err);
+    showToast('Datos locales dañados; se ha iniciado vacío');
+  }
+  return createEmptyData();
+}
+
 /** Estado mutable compartido por toda la app. */
 export let data = loadData();
 migrateSubjectGoals(data.subjects);
 
+/** @returns {boolean} */
 export function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    const payload = JSON.stringify(data);
+    localStorage.setItem(STORAGE_KEY, payload);
+    const readBack = localStorage.getItem(STORAGE_KEY);
+    if (readBack !== payload) {
+      throw new Error('Verificación de guardado fallida');
+    }
+    return true;
+  } catch (err) {
+    console.error('[storage] No se pudieron guardar los datos:', err);
+    showToast('No se pudieron guardar los datos en este navegador');
+    return false;
+  }
+}
+
+/** Pide al navegador que no borre localStorage con facilidad (PWA / móvil). */
+export async function initStoragePersistence() {
+  if (!navigator.storage?.persist) return;
+  try {
+    await navigator.storage.persist();
+  } catch (err) {
+    console.warn('[storage] Persistencia no disponible:', err);
+  }
 }
 
 // Migración / integridad: si faltan stats o están desfasados, reconstruir una vez.
@@ -300,22 +329,34 @@ export function exportData() {
  */
 export function importData(file, { onSuccess } = {}) {
   const reader = new FileReader();
+  reader.onerror = () => {
+    showToast('No se pudo leer el archivo');
+  };
   reader.onload = (e) => {
     try {
       const parsed = JSON.parse(e.target.result);
-      if (!parsed || !Array.isArray(parsed.subjects) || !Array.isArray(parsed.sessions) || typeof parsed.settings !== 'object') {
+      if (!parsed || !Array.isArray(parsed.subjects) || !Array.isArray(parsed.sessions)) {
         showToast('El archivo no tiene un formato válido');
         return;
       }
+      const settings =
+        parsed.settings && typeof parsed.settings === 'object' && !Array.isArray(parsed.settings)
+          ? parsed.settings
+          : {};
       data.subjects = parsed.subjects;
       data.sessions = parsed.sessions;
-      data.settings = { ...DEFAULT_SETTINGS, ...data.settings, ...parsed.settings };
+      data.settings = { ...DEFAULT_SETTINGS, ...settings };
+      migrateSubjectGoals(data.subjects);
       recomputeStats();
-      saveData();
+      if (!saveData()) {
+        showToast('Los datos se leyeron pero no se pudieron guardar');
+        return;
+      }
       onSuccess?.();
-      showToast('Datos importados correctamente');
+      showToast('Datos importados y guardados correctamente');
     } catch (err) {
-      showToast('No se pudo leer el archivo');
+      console.error('[storage] Importación fallida:', err);
+      showToast('No se pudo importar el archivo');
     }
   };
   reader.readAsText(file);
@@ -327,7 +368,11 @@ export function importData(file, { onSuccess } = {}) {
  */
 export function wipeAllData({ onSuccess } = {}) {
   localStorage.removeItem(STORAGE_KEY);
-  data = loadData();
+  const fresh = createEmptyData();
+  data.subjects = fresh.subjects;
+  data.sessions = fresh.sessions;
+  data.settings = fresh.settings;
+  data.stats = fresh.stats;
   onSuccess?.();
 }
 

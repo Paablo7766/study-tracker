@@ -1,4 +1,4 @@
-const CACHE_NAME = 'study-tracker-v4';
+const CACHE_NAME = 'study-tracker-v5';
 
 const urlsToCache = [
   './index.html',
@@ -16,6 +16,7 @@ const urlsToCache = [
   './js/subjectGoals.js',
   './js/timer.js',
   './js/settings.js',
+  './js/streak-modal.js',
   './assets/icon.png',
   './assets/icon-32.png',
   './assets/icon-180.png',

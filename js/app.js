@@ -1,5 +1,5 @@
 import { initSidebar, initNavigation } from './ui.js';
-import { initStorageUI } from './storage.js';
+import { initStorageUI, initStoragePersistence } from './storage.js';
 import { showDashboard, initDashboard, refreshStatsIfVisible } from './dashboard.js';
 import { renderSubjectSelects, renderMaterias, initSubjects } from './subjects.js';
 import {
@@ -15,6 +15,7 @@ import { loadSettingsForm, initSettings } from './settings.js';
 import { initStreakModal } from './streak-modal.js';
 
 // ---------- Listeners ----------
+initStoragePersistence();
 initSidebar();
 initStreakModal();
 
