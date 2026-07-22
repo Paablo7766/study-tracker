@@ -1,7 +1,7 @@
 const CACHE_NAME = 'study-tracker-v4';
 
 const urlsToCache = [
-  './study-tracker (2).html',
+  './index.html',
   './style.css',
   './app.js',
   './icon-192.png',
@@ -60,7 +60,7 @@ async function networkFirst(request) {
   } catch {
     return (
       (await cache.match(request)) ||
-      (await cache.match('./study-tracker (2).html'))
+      (await cache.match('./index.html'))
     );
   }
 }
