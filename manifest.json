@@ -2,7 +2,7 @@
   "name": "Study Tracker",
   "short_name": "Study Tracker",
   "description": "Temporizador Pomodoro y seguimiento de estudio offline.",
-  "start_url": "./study-tracker (2).html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
