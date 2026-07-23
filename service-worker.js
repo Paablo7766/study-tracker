@@ -1,4 +1,4 @@
-const CACHE_NAME = 'study-tracker-v5';
+const CACHE_NAME = 'study-tracker-v9';
 
 const urlsToCache = [
   './index.html',
@@ -8,6 +8,8 @@ const urlsToCache = [
   './icon-512.png',
   './manifest.json',
   './js/app.js',
+  './js/config.js',
+  './js/supabase.js',
   './js/utils.js',
   './js/ui.js',
   './js/storage.js',

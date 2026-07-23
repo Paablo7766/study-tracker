@@ -70,10 +70,10 @@ function playViewTransition(section) {
 
 /**
  * Navegación entre vistas.
- * @param {{ onShowDashboard?: () => void, onShowMaterias?: () => void }} [hooks]
+ * @param {{ onShowDashboard?: () => void, onShowMaterias?: () => void, onViewChange?: (view: string) => void }} [hooks]
  *   Callbacks inyectados desde app.js para evitar imports circulares.
  */
-export function initNavigation({ onShowDashboard, onShowMaterias } = {}) {
+export function initNavigation({ onShowDashboard, onShowMaterias, onViewChange } = {}) {
   const mainEl = document.querySelector('main');
 
   document.querySelectorAll('nav button[data-view]').forEach(btn => {
@@ -92,6 +92,7 @@ export function initNavigation({ onShowDashboard, onShowMaterias } = {}) {
       mainEl.scrollTop = 0;
       window.scrollTo(0, 0);
 
+      onViewChange?.(view);
       requestAnimationFrame(updateNavPill);
     });
   });

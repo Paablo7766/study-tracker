@@ -56,11 +56,28 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </span>
           <span class="nav-toggle-label">Contraer</span>
+          <span class="sync-dot" id="navSyncDot" data-status="syncing" role="img" aria-label="Sincronizando" tabindex="0"></span>
         </button>
       </div>
     </div>
   </nav>
   <main>
+    <div id="liveSessionBanner" class="live-session hidden" aria-live="polite">
+      <button type="button" class="live-session-card" id="liveSessionBtn" aria-label="Volver al temporizador">
+        <div class="live-session-track" aria-hidden="true">
+          <div class="live-session-fill" id="liveSessionFill"></div>
+        </div>
+        <div class="live-session-body">
+          <span class="live-session-dot" aria-hidden="true"><span class="live-session-dot-ping"></span></span>
+          <div class="live-session-text">
+            <span class="live-session-eyebrow" id="liveSessionEyebrow">En vivo</span>
+            <span class="live-session-label" id="liveSessionLabel">Enfoque</span>
+          </div>
+          <span class="live-session-time" id="liveSessionTime">25:00</span>
+          <svg class="live-session-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </button>
+    </div>
 
     <section id="view-timer">
       <div class="timer-wrap">
@@ -373,7 +390,7 @@
                 <span class="ph-peak-badge" id="phPeakBadge">Sin datos</span>
               </div>
             </div>
-            <div class="dash-bar-chart">
+            <div class="dash-bar-chart dash-bar-chart--peak">
               <div class="dash-bars" id="phBars"></div>
               <div class="dash-bar-axis">
                 <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
@@ -524,7 +541,11 @@
                       </span>
                       <div class="settings-card-group-copy">
                         <p class="settings-card-subtitle">Datos</p>
-                        <p class="settings-card-desc">Tus registros se guardan solo en este navegador. Exporta una copia para no perder tu progreso.</p>
+                        <p class="settings-card-desc">Tus registros se guardan en este navegador y se sincronizan automáticamente con la nube. Exporta una copia como respaldo extra.</p>
+                        <p class="sync-line">
+                          <span class="sync-dot" id="settingsSyncDot" data-status="syncing" role="img" aria-label="Sincronizando" tabindex="0"></span>
+                          <span class="sync-line-text" id="settingsSyncText">Sincronizando…</span>
+                        </p>
                       </div>
                     </div>
                     <div class="settings-actions settings-actions--pair">
@@ -745,35 +766,16 @@
   </div>
 </div>
 
-<div id="streakModal" class="streak-modal hidden" role="dialog" aria-modal="true" aria-labelledby="streakView1Title">
+<div id="streakModal" class="streak-modal hidden" role="dialog" aria-modal="true" aria-labelledby="streakDetailHeading">
   <canvas id="streakSparksCanvas" class="streak-sparks-canvas" aria-hidden="true"></canvas>
   <div class="streak-glow" aria-hidden="true"></div>
 
-  <div id="streakView1" class="streak-view streak-view--hero fade-in-up">
-    <div class="streak-view-inner">
-      <div class="streak-hero-block">
-        <div class="streak-hero-core floating">
-          <div class="streak-flame-wrap"></div>
-          <h1 class="streak-hero-number" id="streakHeroNumber">0</h1>
-        </div>
-        <p class="streak-hero-title" id="streakView1Title">Tu racha</p>
-      </div>
-      <div class="streak-view-actions">
-        <div class="streak-glass-panel streak-mini-panel" id="streakMiniWrap"></div>
-        <button type="button" class="streak-glass-btn" id="streakBtnContinue">
-          <span>Continuar</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div id="streakView2" class="streak-view streak-view--detail hidden is-hidden">
+  <div id="streakView" class="streak-view streak-view--detail fade-in-up">
     <div class="streak-detail-header">
       <button type="button" class="streak-back-btn" id="streakBtnBack" aria-label="Cerrar">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <h2 class="streak-detail-heading">Racha</h2>
+      <h2 class="streak-detail-heading" id="streakDetailHeading">Racha</h2>
       <div class="streak-detail-spacer"></div>
     </div>
     <div class="streak-view-inner streak-view-inner--detail">

@@ -120,9 +120,11 @@ function buildSubjectCard(s, weekStart) {
     ${progressHtml}
     <div class="card-actions">
       ${buildUnitsActionButtons(s)}
-      <button type="button" class="icon-btn" title="${archiveTitle}" aria-label="${archiveTitle} ${safeName}" data-action="${archiveAction}" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${archiveIcon}</svg></button>
-      ${s.archived ? '' : `<button type="button" class="icon-btn" title="Editar" aria-label="Editar ${safeName}" data-action="edit" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>`}
-      <button type="button" class="icon-btn danger" title="Eliminar" aria-label="Eliminar ${safeName}" data-action="delete" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+      <div class="card-actions-admin">
+        <button type="button" class="icon-btn" title="${archiveTitle}" aria-label="${archiveTitle} ${safeName}" data-action="${archiveAction}" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${archiveIcon}</svg></button>
+        ${s.archived ? '' : `<button type="button" class="icon-btn" title="Editar" aria-label="Editar ${safeName}" data-action="edit" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>`}
+        <button type="button" class="icon-btn danger" title="Eliminar" aria-label="Eliminar ${safeName}" data-action="delete" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+      </div>
     </div>
   </div>`;
 }

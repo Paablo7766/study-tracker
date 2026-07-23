@@ -65,7 +65,7 @@ function computeWeekDayTotals(weekStart, sessions = data.sessions) {
   return dayTotals;
 }
 
-export function renderDashboard() {
+export function renderDashboard({ animateCharts = false } = {}) {
   const dateEl = document.getElementById('todayDate');
   if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -136,12 +136,12 @@ export function renderDashboard() {
   document.getElementById('statTotalHours').textContent = (stats.totalMinutes / 60).toFixed(1) + 'h';
   document.getElementById('statSessions').textContent = stats.totalSessions;
 
-  renderWeekChart(getWeekChartPayload(filteredSessions, stats));
+  renderWeekChart(getWeekChartPayload(filteredSessions, stats), { animate: animateCharts });
 
   renderHeatmap();
   renderDiaDorado();
   renderSubjectMix();
-  renderPeakHours();
+  renderPeakHours({ animate: animateCharts });
   updateSubjectFilterIndicator();
   syncWeekCompareToggle();
   syncBottomRowHeights();
@@ -209,7 +209,7 @@ function syncBottomRowHeights() {
 /** Resetea a la semana actual y pinta el dashboard (usado al entrar a la vista). */
 export function showDashboard() {
   weekOffset = 0;
-  renderDashboard();
+  renderDashboard({ animateCharts: true });
 }
 
 export function refreshStatsIfVisible() {
@@ -501,13 +501,23 @@ function renderWeekChart(payload, { animate = false } = {}) {
       if (!chart) return;
       requestAnimationFrame(() => {
         chart.classList.add('week-chart-entering');
-        setTimeout(() => chart.classList.remove('week-chart-entering'), 520);
+        setTimeout(() => chart.classList.remove('week-chart-entering'), 620);
       });
     }, 240);
     return;
   }
 
   wrap.innerHTML = html;
+
+  if (animate) {
+    const chart = wrap.querySelector('.dash-bar-chart--week');
+    if (chart) {
+      requestAnimationFrame(() => {
+        chart.classList.add('week-chart-entering');
+        setTimeout(() => chart.classList.remove('week-chart-entering'), 620);
+      });
+    }
+  }
 }
 
 function refreshWeekChart(animate = false) {
@@ -960,7 +970,7 @@ function computePeakHoursToday() {
   return { ...stats, totalMin, sessionCount: todaySessions.length };
 }
 
-function renderPeakHours() {
+function renderPeakHours({ animate = false } = {}) {
   const barsEl     = document.getElementById('phBars');
   const badgeEl    = document.getElementById('phPeakBadge');
   const detailEl   = document.getElementById('phPeakDetail');
@@ -998,10 +1008,19 @@ function renderPeakHours() {
     const heightPct = Math.max(4, Math.round((min / max) * 100));
     const cls = min > 0 ? 'active' : 'inactive';
     const peaked = h === peakHour && peakMin > 0 ? ' peaked' : '';
-    return `<div class="dash-bar-col" data-hour="${h}" data-minutes="${min}" data-mode="${modeLabel}">
+    return `<div class="dash-bar-col" data-hour="${h}" data-minutes="${min}" data-mode="${modeLabel}" style="--bar-i:${h}">
       <div class="dash-bar ${cls}${peaked}" style="height:${heightPct}%"></div>
     </div>`;
   }).join('');
+
+  const chart = barsEl.closest('.dash-bar-chart--peak');
+  if (animate && chart) {
+    chart.classList.remove('ph-chart-entering');
+    requestAnimationFrame(() => {
+      chart.classList.add('ph-chart-entering');
+      setTimeout(() => chart.classList.remove('ph-chart-entering'), 680);
+    });
+  }
 }
 
 function setPeakHoursMode(mode) {
@@ -1018,7 +1037,8 @@ function initPeakHoursInteractions() {
   const historicBtn = document.getElementById('phBtnHistoric');
   const todayBtn = document.getElementById('phBtnToday');
   const card = document.getElementById('peakHoursCard');
-  if (!historicBtn || !todayBtn || !card) return;
+  const barsEl = document.getElementById('phBars');
+  if (!historicBtn || !todayBtn || !card || !barsEl) return;
 
   historicBtn.addEventListener('click', (e) => {
     e.preventDefault();
@@ -1033,17 +1053,16 @@ function initPeakHoursInteractions() {
 
   if (!card.dataset.phBound) {
     card.dataset.phBound = '1';
-    bindDashBarTooltip(card, (col) => {
+    bindDashBarTooltip(barsEl, (col) => {
       const hour = parseInt(col.dataset.hour, 10);
       const minutes = parseInt(col.dataset.minutes, 10) || 0;
-      const mode = col.dataset.mode || 'histórico';
       const padH = n => String(n).padStart(2, '0');
       const next = hour + 1 < 24 ? hour + 1 : 0;
       const range = `${padH(hour)}:00 – ${padH(next)}:00`;
       if (minutes === 0) {
-        return `<p class="tooltip-date">${range}</p><p class="tooltip-empty">Sin actividad (${mode})</p>`;
+        return `<p class="tooltip-date">${range}: 0 min</p>`;
       }
-      return `<p class="tooltip-date">${range}</p><p class="tooltip-minutes">${minutes} min · ${mode}</p>`;
+      return `<p class="tooltip-date">${range}: ${minutes} min</p>`;
     });
   }
 }

@@ -1,7 +1,23 @@
 import { showToast } from './ui.js';
 import { startOfWeekMonday } from './utils.js';
+import {
+  isSupabaseConfigured,
+  ensureSession,
+  pullRemoteData,
+  pushRemoteData,
+  deleteRemoteData,
+  setSyncStatus,
+  onSyncStatusChange
+} from './supabase.js';
 
 const STORAGE_KEY = 'study_tracker_data_v1';
+const UPDATED_AT_KEY = 'study_tracker_updated_at_v1';
+const CLOUD_SOURCE_OF_TRUTH_KEY = 'study_tracker_cloud_source_v1';
+const CLOUD_SYNC_DEBOUNCE_MS = 1500;
+
+let syncTimer = null;
+let pendingCloudSync = false;
+let onlineListenerAttached = false;
 
 const DEFAULT_SETTINGS = {
   focusMin: 25,
@@ -258,17 +274,244 @@ export function loadData() {
 }
 
 /** Estado mutable compartido por toda la app. */
-export let data = loadData();
-migrateSubjectGoals(data.subjects);
+export let data = createEmptyData();
+
+function getLocalUpdatedAt() {
+  const raw = localStorage.getItem(UPDATED_AT_KEY);
+  return raw ? new Date(raw).getTime() : 0;
+}
+
+function setLocalUpdatedAt(iso = new Date().toISOString()) {
+  localStorage.setItem(UPDATED_AT_KEY, iso);
+}
+
+function hasRemoteContent(remote) {
+  return Boolean(
+    remote && (remote.subjects?.length > 0 || remote.sessions?.length > 0)
+  );
+}
+
+function isCloudSourceOfTruth() {
+  return localStorage.getItem(CLOUD_SOURCE_OF_TRUTH_KEY) === '1';
+}
+
+function markCloudSourceOfTruth() {
+  localStorage.setItem(CLOUD_SOURCE_OF_TRUTH_KEY, '1');
+}
+
+function buildSyncPayload(source) {
+  return {
+    subjects: source.subjects,
+    sessions: source.sessions,
+    settings: { ...DEFAULT_SETTINGS, ...source.settings }
+  };
+}
+
+/**
+ * Lee todo el estado en localStorage (sesiones, materias, ajustes de tiempos)
+ * y hace UPSERT en Supabase. Tras el éxito, la nube pasa a ser la fuente de verdad.
+ * @returns {Promise<boolean>}
+ */
+export async function syncLocalToCloud() {
+  if (!isSupabaseConfigured()) return false;
+  if (!navigator.onLine) {
+    setSyncStatus('offline');
+    throw new Error('Sin conexión');
+  }
+
+  setSyncStatus('syncing');
+  await ensureSession();
+
+  const local = loadData();
+  const payload = buildSyncPayload(local);
+
+  await pushRemoteData(payload);
+
+  applyDataPayload(data, payload);
+  finalizeDataIntegrity();
+
+  const now = new Date().toISOString();
+  setLocalUpdatedAt(now);
+  markCloudSourceOfTruth();
+  saveData({ skipCloud: true });
+
+  pendingCloudSync = false;
+  setSyncStatus('synced');
+  return true;
+}
+
+/**
+ * Carga el estado desde Supabase y lo guarda en memoria + localStorage (caché).
+ * @returns {Promise<boolean>}
+ */
+async function loadFromCloud() {
+  const remote = await pullRemoteData();
+  if (!remote || !hasRemoteContent(remote)) return false;
+
+  applyDataPayload(data, {
+    subjects: remote.subjects,
+    sessions: remote.sessions,
+    settings: remote.settings
+  });
+  finalizeDataIntegrity();
+  saveData({ skipCloud: true });
+  setLocalUpdatedAt(remote.updated_at);
+  return true;
+}
+
+function applyDataPayload(target, source) {
+  target.subjects = source.subjects;
+  target.sessions = source.sessions;
+  target.settings = { ...DEFAULT_SETTINGS, ...source.settings };
+}
+
+function finalizeDataIntegrity() {
+  migrateSubjectGoals(data.subjects);
+  if (
+    !data.stats ||
+    typeof data.stats.totalSessions !== 'number' ||
+    data.stats.totalSessions !== data.sessions.length
+  ) {
+    recomputeStats();
+  } else {
+    ensureStatsFresh();
+  }
+}
+
+function attachOnlineRetryListener() {
+  if (onlineListenerAttached) return;
+  onlineListenerAttached = true;
+  window.addEventListener('online', () => {
+    if (pendingCloudSync) forceCloudSync();
+  });
+}
+
+function scheduleCloudSync() {
+  if (!isSupabaseConfigured()) return;
+  pendingCloudSync = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    forceCloudSync();
+  }, CLOUD_SYNC_DEBOUNCE_MS);
+}
+
+export async function forceCloudSync() {
+  if (!isSupabaseConfigured()) return;
+  clearTimeout(syncTimer);
+  if (!navigator.onLine) {
+    setSyncStatus('offline');
+    return;
+  }
+
+  try {
+    setSyncStatus('syncing');
+    await ensureSession();
+
+    if (!isCloudSourceOfTruth() && !hasRemoteContent(await pullRemoteData())) {
+      await syncLocalToCloud();
+      return;
+    }
+
+    await pushRemoteData(buildSyncPayload(data));
+    pendingCloudSync = false;
+    setSyncStatus('synced');
+  } catch (err) {
+    console.error('[storage] Error al sincronizar con Supabase:', err);
+    pendingCloudSync = true;
+    setSyncStatus('error');
+  }
+}
+
+/**
+ * Arranque: primera sesión → sube localStorage a la nube;
+ * después → Supabase es la fuente de verdad.
+ */
+export async function initCloudSync() {
+  attachOnlineRetryListener();
+
+  const local = loadData();
+  applyDataPayload(data, local);
+
+  if (!isSupabaseConfigured()) {
+    finalizeDataIntegrity();
+    saveData({ skipCloud: true });
+    setSyncStatus('disabled');
+    return;
+  }
+
+  if (!navigator.onLine) {
+    finalizeDataIntegrity();
+    saveData({ skipCloud: true });
+    setSyncStatus('offline');
+    pendingCloudSync = true;
+    return;
+  }
+
+  try {
+    setSyncStatus('syncing');
+    await ensureSession();
+    const remote = await pullRemoteData();
+    const remoteHas = hasRemoteContent(remote);
+    const localHas = hasLocalContent(local);
+    const cloudIsSource = isCloudSourceOfTruth();
+
+    if (!cloudIsSource && !remoteHas) {
+      // Primera sesión: subir localStorage → Supabase
+      if (localHas) {
+        await syncLocalToCloud();
+      } else {
+        markCloudSourceOfTruth();
+        finalizeDataIntegrity();
+        saveData({ skipCloud: true });
+        setSyncStatus('synced');
+      }
+    } else if (!cloudIsSource && remoteHas) {
+      // Ya hay datos en la nube (p. ej. otro dispositivo): la nube manda
+      await loadFromCloud();
+      markCloudSourceOfTruth();
+      setSyncStatus('synced');
+    } else if (cloudIsSource) {
+      // Supabase es la fuente de verdad
+      if (remoteHas) {
+        await loadFromCloud();
+      } else if (localHas) {
+        await syncLocalToCloud();
+      } else {
+        finalizeDataIntegrity();
+        saveData({ skipCloud: true });
+      }
+      pendingCloudSync = false;
+      setSyncStatus('synced');
+    }
+
+    pendingCloudSync = false;
+  } catch (err) {
+    console.error('[storage] Sync inicial fallida:', err);
+    finalizeDataIntegrity();
+    saveData({ skipCloud: true });
+    pendingCloudSync = true;
+    const authError = err?.message?.includes('Auth anónima desactivada');
+    setSyncStatus(authError ? 'auth' : 'error');
+    if (authError) showToast('Activa Anonymous sign-ins en Supabase → Authentication → Providers');
+  }
+}
+
+function hasLocalContent(payload) {
+  return payload.subjects.length > 0 || payload.sessions.length > 0;
+}
 
 /** @returns {boolean} */
-export function saveData() {
+export function saveData({ skipCloud = false } = {}) {
   try {
     const payload = JSON.stringify(data);
     localStorage.setItem(STORAGE_KEY, payload);
     const readBack = localStorage.getItem(STORAGE_KEY);
     if (readBack !== payload) {
       throw new Error('Verificación de guardado fallida');
+    }
+    if (!skipCloud) {
+      setLocalUpdatedAt();
+      scheduleCloudSync();
     }
     return true;
   } catch (err) {
@@ -286,18 +529,6 @@ export async function initStoragePersistence() {
   } catch (err) {
     console.warn('[storage] Persistencia no disponible:', err);
   }
-}
-
-// Migración / integridad: si faltan stats o están desfasados, reconstruir una vez.
-if (
-  !data.stats ||
-  typeof data.stats.totalSessions !== 'number' ||
-  data.stats.totalSessions !== data.sessions.length
-) {
-  recomputeStats();
-  saveData();
-} else {
-  ensureStatsFresh();
 }
 
 export function exportData() {
@@ -332,7 +563,7 @@ export function importData(file, { onSuccess } = {}) {
   reader.onerror = () => {
     showToast('No se pudo leer el archivo');
   };
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !Array.isArray(parsed.subjects) || !Array.isArray(parsed.sessions)) {
@@ -352,6 +583,7 @@ export function importData(file, { onSuccess } = {}) {
         showToast('Los datos se leyeron pero no se pudieron guardar');
         return;
       }
+      await forceCloudSync();
       onSuccess?.();
       showToast('Datos importados y guardados correctamente');
     } catch (err) {
@@ -366,13 +598,25 @@ export function importData(file, { onSuccess } = {}) {
  * Borra todo el almacenamiento y reinicia `data`.
  * @param {{ onSuccess?: () => void }} [options]
  */
-export function wipeAllData({ onSuccess } = {}) {
+export async function wipeAllData({ onSuccess } = {}) {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(UPDATED_AT_KEY);
+  localStorage.removeItem(CLOUD_SOURCE_OF_TRUTH_KEY);
   const fresh = createEmptyData();
   data.subjects = fresh.subjects;
   data.sessions = fresh.sessions;
   data.settings = fresh.settings;
   data.stats = fresh.stats;
+
+  try {
+    await deleteRemoteData();
+    pendingCloudSync = false;
+    setSyncStatus(navigator.onLine && isSupabaseConfigured() ? 'synced' : 'offline');
+  } catch (err) {
+    console.warn('[storage] No se pudieron borrar los datos remotos:', err);
+    setSyncStatus('error');
+  }
+
   onSuccess?.();
 }
 
@@ -380,7 +624,33 @@ export function wipeAllData({ onSuccess } = {}) {
  * Listeners de exportar / importar / borrar (vista Ajustes).
  * @param {{ onDataMutated?: () => void }} [options]
  */
+function updateSyncStatusUI(status) {
+  const tooltips = {
+    synced: 'Sincronizado',
+    syncing: 'Sincronizando…',
+    offline: 'Guardando en local, esperando conexión',
+    error: 'Error de sincronización',
+    auth: 'Activa auth anónima en Supabase',
+    disabled: 'Nube no configurada'
+  };
+
+  const label = tooltips[status] || status;
+
+  document.querySelectorAll('.sync-dot').forEach((dot) => {
+    dot.dataset.status = status;
+    dot.setAttribute('aria-label', label);
+    if (dot.id === 'navSyncDot') {
+      dot.setAttribute('data-tip', label);
+    }
+  });
+
+  const settingsText = document.getElementById('settingsSyncText');
+  if (settingsText) settingsText.textContent = label;
+}
+
 export function initStorageUI({ onDataMutated } = {}) {
+  onSyncStatusChange(updateSyncStatusUI);
+
   document.getElementById('exportDataBtn').addEventListener('click', exportData);
 
   document.getElementById('importDataBtn').addEventListener('click', () => {
@@ -405,8 +675,8 @@ export function initStorageUI({ onDataMutated } = {}) {
     if (e.target.id === 'wipeDataModal') document.getElementById('wipeDataModal').classList.add('hidden');
   });
 
-  document.getElementById('wipeDataConfirmBtn').addEventListener('click', () => {
-    wipeAllData({ onSuccess: onDataMutated });
+  document.getElementById('wipeDataConfirmBtn').addEventListener('click', async () => {
+    await wipeAllData({ onSuccess: onDataMutated });
     document.getElementById('wipeDataModal').classList.add('hidden');
     showToast('Todos los datos han sido borrados');
   });

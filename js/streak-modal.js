@@ -49,34 +49,6 @@ function getStreakDays(daySet, now = new Date()) {
   return days;
 }
 
-function buildMiniStreakRow(streakDays) {
-  const mini = [...streakDays.slice(0, 4)].reverse();
-  if (mini.length === 0) {
-    return `<div class="streak-mini-empty">Estudia hoy para empezar tu racha</div>`;
-  }
-
-  const slots = 4;
-  const padded = [...Array(slots - mini.length).fill(null), ...mini];
-
-  const labels = padded.map(d =>
-    d ? d.toLocaleDateString('es-ES', { weekday: 'narrow' }).replace('.', '').toUpperCase() : ''
-  );
-
-  const nodes = padded.map((d, i) => {
-    if (!d) return `<div class="streak-mini-dot streak-mini-dot--empty" aria-hidden="true"></div>`;
-    const isToday = i === padded.length - 1;
-    const cls = isToday ? 'streak-mini-dot streak-mini-dot--today' : 'streak-mini-dot';
-    return `<div class="${cls}">${CHECK_SVG}</div>`;
-  }).join('');
-
-  return `
-    <div class="streak-mini-labels">${labels.map(l => `<span>${l}</span>`).join('')}</div>
-    <div class="streak-mini-track">
-      <div class="streak-mini-line" aria-hidden="true"></div>
-      ${nodes}
-    </div>`;
-}
-
 function buildWeekGrid(daySet, streakDayKeys, now = new Date()) {
   const weekStart = startOfWeekMonday(now);
   const todayKey = dayKey(now);
@@ -149,12 +121,10 @@ function renderModalContent({ mode = 'default' } = {}) {
   const best = data.stats.bestStreak;
   const streakDayKeys = new Set(streakDays.map(dayKey));
 
-  const title = mode === 'celebrate' ? 'Nueva racha' : 'Tu racha';
+  const heading = mode === 'celebrate' ? 'Nueva racha' : 'Racha';
 
-  document.getElementById('streakHeroNumber').textContent = streak;
-  document.getElementById('streakView1Title').textContent = title;
+  document.getElementById('streakDetailHeading').textContent = heading;
   document.getElementById('streakDetailNumber').textContent = streak;
-  document.getElementById('streakMiniWrap').innerHTML = buildMiniStreakRow(streakDays);
   document.getElementById('streakWeekWrap').innerHTML = buildWeekGrid(daySet, streakDayKeys, now);
 
   const tip = streak === 0
@@ -170,29 +140,12 @@ function renderModalContent({ mode = 'default' } = {}) {
   });
 }
 
-function resetViews() {
-  const view1 = document.getElementById('streakView1');
-  const view2 = document.getElementById('streakView2');
-
-  view1.classList.remove('hidden', 'view-exit', 'view-enter');
-  view1.classList.add('fade-in-up');
-  view2.classList.add('hidden');
-  view2.classList.remove('view-enter', 'view-exit');
-  view2.classList.add('is-hidden');
-}
-
-function goToStreakDetail() {
-  const view1 = document.getElementById('streakView1');
-  const view2 = document.getElementById('streakView2');
-
-  view1.classList.remove('fade-in-up');
-  view1.classList.add('view-exit');
-
-  setTimeout(() => {
-    view1.classList.add('hidden');
-    view2.classList.remove('hidden', 'is-hidden');
-    view2.classList.add('view-enter');
-  }, 500);
+function resetViewAnimation() {
+  const view = document.getElementById('streakView');
+  if (!view) return;
+  view.classList.remove('fade-in-up');
+  void view.offsetWidth;
+  view.classList.add('fade-in-up');
 }
 
 function resizeSparksCanvas() {
@@ -267,7 +220,6 @@ export function closeStreakModal() {
   stopSparks();
   setTimeout(() => {
     overlay.classList.add('hidden');
-    resetViews();
     document.body.style.overflow = '';
   }, 280);
 }
@@ -277,7 +229,7 @@ export function openStreakModal({ mode = 'default' } = {}) {
   if (!overlay) return;
 
   renderModalContent({ mode });
-  resetViews();
+  resetViewAnimation();
   overlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   requestAnimationFrame(() => overlay.classList.add('show'));
@@ -285,7 +237,6 @@ export function openStreakModal({ mode = 'default' } = {}) {
 }
 
 export function initStreakModal() {
-  document.getElementById('streakBtnContinue')?.addEventListener('click', goToStreakDetail);
   document.getElementById('streakBtnBack')?.addEventListener('click', closeStreakModal);
 
   document.getElementById('streakModal')?.addEventListener('click', (e) => {

@@ -1,6 +1,6 @@
 import { data, saveData, applySessionToStats, ensureStatsFresh } from './storage.js';
 import { uid, toLocalDatetimeInputValue, startOfWeekMonday } from './utils.js';
-import { showToast } from './ui.js';
+import { showToast, navigateTo } from './ui.js';
 import { refreshStatsIfVisible, showStreakCelebration } from './dashboard.js';
 import { getSubjectGoalProgress } from './subjectGoals.js';
 
@@ -71,6 +71,95 @@ export function updateTimerDisplay() {
     document.title = `${formatTime(secondsLeft)} · Study Tracker`;
   } else {
     document.title = ORIGINAL_TITLE;
+  }
+
+  updateLiveSessionUI();
+}
+
+function getModeTotalSeconds() {
+  return mode === 'focus'
+    ? data.settings.focusMin * 60
+    : mode === 'break'
+      ? data.settings.breakMin * 60
+      : data.settings.longBreakMin * 60;
+}
+
+function placeLiveSessionBanner(show) {
+  const banner = document.getElementById('liveSessionBanner');
+  const main = document.querySelector('main');
+  if (!banner || !main) return;
+
+  if (!show) {
+    if (banner.parentElement !== main) main.insertBefore(banner, main.firstElementChild);
+    return;
+  }
+
+  const activeSection = document.querySelector('main > section:not(.hidden)');
+  if (!activeSection) return;
+
+  const anchor = activeSection.querySelector('.dash-header, .settings-header')
+    || activeSection.querySelector('.materias-tabs');
+  if (anchor) {
+    if (banner.previousElementSibling !== anchor) anchor.insertAdjacentElement('afterend', banner);
+  } else if (banner.parentElement !== activeSection) {
+    activeSection.insertBefore(banner, activeSection.firstElementChild);
+  }
+}
+
+export function updateLiveSessionUI() {
+  const banner = document.getElementById('liveSessionBanner');
+  if (!banner) return;
+
+  const active = isRunning || isPaused;
+  const timerView = document.getElementById('view-timer');
+  const onTimerView = timerView && !timerView.classList.contains('hidden');
+  const show = active && !onTimerView;
+
+  banner.classList.toggle('hidden', !show);
+  banner.classList.toggle('live-session--running', isRunning);
+  banner.classList.toggle('live-session--paused', isPaused && !isRunning);
+  banner.classList.toggle('live-session--break', mode !== 'focus');
+  banner.classList.toggle('live-session--focus', mode === 'focus');
+
+  placeLiveSessionBanner(show);
+
+  const timerNav = document.querySelector('nav button[data-view="timer"]');
+  timerNav?.classList.toggle('nav-live', active && !onTimerView);
+  timerNav?.classList.toggle('nav-live--paused', isPaused && !isRunning);
+  timerNav?.classList.toggle('nav-live--break', active && !onTimerView && mode !== 'focus');
+
+  if (!show) return;
+
+  const fill = document.getElementById('liveSessionFill');
+  const timeEl = document.getElementById('liveSessionTime');
+  const labelEl = document.getElementById('liveSessionLabel');
+  const eyebrowEl = document.getElementById('liveSessionEyebrow');
+  const totalForMode = getModeTotalSeconds();
+  const progress = totalForMode > 0
+    ? Math.min(100, Math.max(0, (1 - secondsLeft / totalForMode) * 100))
+    : 0;
+
+  if (fill) fill.style.width = `${progress}%`;
+  if (timeEl) timeEl.textContent = formatTime(secondsLeft);
+  if (eyebrowEl) eyebrowEl.textContent = isPaused && !isRunning ? 'Pausado' : 'En vivo';
+
+  const modeLabel = isPaused && !isRunning
+    ? 'Sesión en pausa'
+    : mode === 'focus'
+      ? 'Enfoque'
+      : mode === 'break'
+        ? 'Descanso'
+        : 'Descanso largo';
+
+  let subjectName = '';
+  if (mode === 'focus') {
+    const subjectId = document.getElementById('subjectSelect')?.value;
+    const subject = subjectId ? data.subjects.find(s => s.id === subjectId) : null;
+    subjectName = subject?.name || '';
+  }
+
+  if (labelEl) {
+    labelEl.textContent = subjectName ? `${modeLabel} · ${subjectName}` : modeLabel;
   }
 }
 
@@ -318,22 +407,34 @@ export function updateCycleTrackFill() {
   const totalFocus = data.settings.cyclesBeforeLongBreak;
   if (Number(container.dataset.builtFor) !== totalFocus) renderCycleTrack();
 
-  const focusIndex = cyclesCompleted % totalFocus;
+  const slotInCycle = cyclesCompleted % totalFocus;
 
   container.querySelectorAll('.cycle-seg').forEach(seg => {
     const kind = seg.dataset.kind;
     const index = Number(seg.dataset.index);
     const fill = seg.querySelector('.cycle-seg-fill');
-    let isPast = false, isActive = false;
+    let isPast = false;
+    let isActive = false;
 
     if (kind === 'focus') {
-      isPast = index < focusIndex;
-      isActive = mode === 'focus' && index === focusIndex;
+      if (mode === 'longBreak') {
+        isPast = true;
+      } else {
+        isPast = index < slotInCycle;
+        isActive = mode === 'focus' && index === slotInCycle;
+      }
     } else if (kind === 'break') {
-      isPast = index < focusIndex;
-      isActive = mode === 'break' && index === focusIndex;
+      if (mode === 'longBreak') {
+        isPast = true;
+      } else if (mode === 'break') {
+        isPast = index < slotInCycle - 1;
+        isActive = index === slotInCycle - 1;
+      } else {
+        isPast = index < slotInCycle;
+      }
     } else if (kind === 'longBreak') {
       isActive = mode === 'longBreak';
+      isPast = mode === 'focus' && slotInCycle === 0 && cyclesCompleted > 0;
     }
 
     if (isActive) {
@@ -347,6 +448,7 @@ export function updateCycleTrackFill() {
       fill.style.width = progress + '%';
     } else if (isPast) {
       seg.classList.add('done');
+      fill.style.width = '0%';
     } else {
       seg.classList.remove('done');
       fill.style.width = '0%';
@@ -539,6 +641,8 @@ export function initTimer() {
   });
 
   document.getElementById('resetBtn').addEventListener('click', resetTimer);
+
+  document.getElementById('liveSessionBtn')?.addEventListener('click', () => navigateTo('timer'));
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && isRunning) {
