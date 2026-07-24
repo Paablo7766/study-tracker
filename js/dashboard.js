@@ -2,6 +2,7 @@ import { data, ensureStatsFresh } from './storage.js';
 import { startOfWeekMonday, endOfISOWeek, countISOWeeksBetween } from './utils.js';
 import { navigateTo } from './ui.js';
 import { openStreakModal } from './streak-modal.js';
+import { openSessionModal, removeSessionWithUndo } from './sessions.js';
 import { t, getDateLocale, getWeekdayLabelsShort, getWeekdayLabelsFull } from './i18n.js';
 
 let weekOffset = 0;
@@ -13,6 +14,7 @@ let phMode = 'historic';
 let diaDoradoResult = null;
 let subjectMixResult = null;
 let currentSubjectFilter = null;
+let dayDetailContext = null;
 
 function getFilteredSessions() {
   const sessions = data.sessions || [];
@@ -226,7 +228,11 @@ export function showStreakCelebration() {
 }
 
 function openDayDetail(weekStart, dayIndex) {
-  const dayStart = new Date(weekStart);
+  const weekStartCopy = new Date(weekStart);
+  weekStartCopy.setHours(0, 0, 0, 0);
+  dayDetailContext = { weekStart: weekStartCopy, dayIndex };
+
+  const dayStart = new Date(weekStartCopy);
   dayStart.setDate(dayStart.getDate() + dayIndex);
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(dayStart);
@@ -270,6 +276,7 @@ function openDayDetail(weekStart, dayIndex) {
       <div class="day-detail-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
         <p>${t('dash.noSessionsDay')}</p>
+        <button type="button" class="btn btn-secondary day-detail-add-btn" id="dayDetailAddEmptyBtn">${t('dash.addSession')}</button>
       </div>`;
   } else {
     timelineEl.innerHTML = daySessions.map((s, i) => {
@@ -278,13 +285,21 @@ function openDayDetail(weekStart, dayIndex) {
       const color = subj ? subj.color : '#5f5f68';
       const name = subj ? subj.name : t('dash.noSubject');
       return `
-        <div class="day-detail-item">
+        <div class="day-detail-item" data-session-id="${s.id}">
           <span class="dot" style="background:${color}"></span>
           <div class="day-detail-item-info">
             <p class="day-detail-item-time">${time} · ${t('dash.sessionN', { n: i + 1 })}</p>
-            <p class="day-detail-item-subject">${name}</p>
+            <p class="day-detail-item-subject">${name}${s.notes ? ` · ${s.notes}` : ''}</p>
           </div>
           <span class="day-detail-item-dur">${fmt(s.durationMin)}</span>
+          <div class="day-detail-item-actions">
+            <button type="button" class="day-detail-action-btn" data-action="edit" aria-label="${t('dash.editSession')}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button type="button" class="day-detail-action-btn day-detail-action-btn--danger" data-action="delete" aria-label="${t('dash.deleteSession')}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+            </button>
+          </div>
         </div>`;
     }).join('');
   }
@@ -293,9 +308,64 @@ function openDayDetail(weekStart, dayIndex) {
   requestAnimationFrame(() => document.getElementById('dayDetailOverlay').classList.add('show'));
 }
 
+function getDayDetailDefaultDate() {
+  if (!dayDetailContext) return new Date();
+  const dayStart = new Date(dayDetailContext.weekStart);
+  dayStart.setDate(dayStart.getDate() + dayDetailContext.dayIndex);
+  dayStart.setHours(0, 0, 0, 0);
+  const now = new Date();
+  if (dayStart.toDateString() === now.toDateString()) return now;
+  const defaultDate = new Date(dayStart);
+  defaultDate.setHours(12, 0, 0, 0);
+  return defaultDate;
+}
+
+function refreshAfterDayDetailSessionChange() {
+  if (dayDetailContext) {
+    openDayDetail(dayDetailContext.weekStart, dayDetailContext.dayIndex);
+  }
+  renderDashboard();
+}
+
+function handleDayDetailAddSession() {
+  openSessionModal({
+    defaultDate: getDayDetailDefaultDate(),
+    onSaved: refreshAfterDayDetailSessionChange
+  });
+}
+
+function handleDayDetailTimelineClick(e) {
+  if (e.target.closest('#dayDetailAddEmptyBtn')) {
+    handleDayDetailAddSession();
+    return;
+  }
+
+  const editBtn = e.target.closest('[data-action="edit"]');
+  const deleteBtn = e.target.closest('[data-action="delete"]');
+  const item = e.target.closest('.day-detail-item');
+  if (!item) return;
+
+  const sessionId = item.dataset.sessionId;
+  if (!sessionId) return;
+
+  if (editBtn) {
+    openSessionModal({
+      sessionId,
+      onSaved: refreshAfterDayDetailSessionChange
+    });
+    return;
+  }
+
+  if (deleteBtn) {
+    removeSessionWithUndo(sessionId, { onRestored: refreshAfterDayDetailSessionChange });
+    refreshAfterDayDetailSessionChange();
+  }
+}
+
 function closeDayDetail() {
   const overlay = document.getElementById('dayDetailOverlay');
   overlay.classList.remove('show');
+  dayDetailContext = null;
   setTimeout(() => overlay.classList.add('hidden'), 300);
 }
 
@@ -580,16 +650,14 @@ function initWeekChartInteractions() {
         ${deltaLine}`;
     }
     if (minutes === 0) {
-      return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">${t('dash.noActivityShort')}</p>`;
+      return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">${t('dash.noActivityShort')}</p><p class="tooltip-hint">${t('dash.clickToManage')}</p>`;
     }
-    return `<p class="tooltip-date">${label}</p><p class="tooltip-minutes">${minutes} min · clic para detalle</p>`;
+    return `<p class="tooltip-date">${label}</p><p class="tooltip-minutes">${minutes} min · ${t('dash.clickToManage')}</p>`;
   });
 
   wrap.addEventListener('click', (e) => {
     const col = e.target.closest('.dash-bar-col');
     if (!col || !weekChartViewStart) return;
-    const minutes = parseInt(col.dataset.minutes, 10) || 0;
-    if (minutes <= 0) return;
     openDayDetail(weekChartViewStart, parseInt(col.dataset.day, 10));
   });
 }
@@ -1407,6 +1475,8 @@ export function initDashboard() {
   document.getElementById('dayDetailOverlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'dayDetailOverlay') closeDayDetail();
   });
+  document.getElementById('dayDetailAddBtn')?.addEventListener('click', handleDayDetailAddSession);
+  document.getElementById('dayDetailTimeline')?.addEventListener('click', handleDayDetailTimelineClick);
 
   document.getElementById('emptyStateGoSubjects')?.addEventListener('click', () => {
     navigateTo('materias');

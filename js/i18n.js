@@ -6,6 +6,7 @@ const MESSAGES = {
     'nav.timer': 'Timer',
     'nav.dashboard': 'Dashboard',
     'nav.subjects': 'Materias',
+    'nav.notes': 'Notas',
     'nav.settings': 'Ajustes',
     'nav.collapse': 'Contraer',
     'nav.collapseMenu': 'Contraer menú lateral',
@@ -30,6 +31,9 @@ const MESSAGES = {
     'timer.minus1': 'Atrasar 1 min',
     'timer.plus1': 'Adelantar 1 min',
     'timer.plus5': 'Adelantar 5 min',
+    'timer.cyclePrev': 'Retroceder fase',
+    'timer.cycleNext': 'Avanzar fase',
+    'timer.cycleReset': 'Reiniciar ciclo',
     'timer.registered': 'registradas',
     'timer.goalExceeded': 'Objetivo diario superado · {current}/{target}',
     'timer.goalMet': 'Objetivo diario cumplido · {current}/{target}',
@@ -47,6 +51,13 @@ const MESSAGES = {
     'timer.hoursMinutes': '{h} h {m} min',
     'timer.hoursOnly': '{h} h',
     'timer.minutesOnly': '{m} min',
+    'sessions.editTitle': 'Editar sesión',
+    'sessions.updated': 'Sesión actualizada: {min} min · {name}',
+    'sessions.deleted': 'Sesión eliminada (-{min} min)',
+    'sessions.lastDeleted': 'Último pomodoro eliminado (-{min} min)',
+    'sessions.noneToDelete': 'No hay sesiones que eliminar',
+    'sessions.undo': 'Recuperar',
+    'sessions.restored': 'Sesión recuperada (+{min} min)',
     'dash.title': 'Dashboard',
     'dash.emptyTitle': 'Aún no hay datos que mostrar',
     'dash.emptyDesc': 'Crea tu primera materia y completa un pomodoro para empezar a ver tu progreso aquí.',
@@ -101,6 +112,10 @@ const MESSAGES = {
     'dash.perSession': '/ sesión',
     'dash.timeline': 'Línea de tiempo',
     'dash.noSessionsDay': 'Sin sesiones este día',
+    'dash.addSession': 'Añadir sesión',
+    'dash.editSession': 'Editar sesión',
+    'dash.deleteSession': 'Eliminar sesión',
+    'dash.clickToManage': 'clic para gestionar',
     'dash.sessionN': 'Sesión {n}',
     'dash.noSubject': 'Sin materia',
     'dash.noActivity': 'Sin actividad este día',
@@ -181,11 +196,59 @@ const MESSAGES = {
     'settings.longBreakMin': 'Descanso largo (min)',
     'settings.cycles': 'Ciclos antes del descanso largo',
     'settings.dailyGoal': 'Meta de pomodoros diarios',
+    'settings.soundsSection': 'Sonidos y alarmas',
+    'settings.soundEnabled': 'Sonido al terminar',
+    'settings.soundEnabledDesc': 'Reproduce un tono cuando acaba un bloque',
+    'settings.soundVolume': 'Volumen',
+    'settings.soundVolumeValue': '{value}%',
+    'settings.soundSpeed': 'Velocidad',
+    'settings.soundSpeedValue': '{value}%',
+    'settings.soundFocus': 'Al terminar pomodoro',
+    'settings.soundBreak': 'Al terminar descanso corto',
+    'settings.soundLongBreak': 'Al terminar descanso largo',
+    'settings.soundRepeat': 'Repeticiones',
+    'settings.soundRepeat1': '1 vez',
+    'settings.soundRepeat2': '2 veces',
+    'settings.soundRepeat3': '3 veces',
+    'settings.soundPreview': 'Probar sonido',
+    'settings.soundChange': 'Cambiar',
+    'settings.soundPickerTitle': 'Elegir sonido',
+    'settings.soundSelected': 'Activo',
     'settings.notificationsSection': 'Notificaciones',
     'settings.autoBreak': 'Descanso automático',
     'settings.autoBreakDesc': 'Inicia el descanso al terminar un pomodoro',
-    'settings.notifications': 'Notificaciones',
+    'settings.notifications': 'Notificaciones del sistema',
     'settings.notificationsDesc': 'Avisa al terminar un bloque',
+    'settings.notifyFocus': 'Al terminar pomodoro',
+    'settings.notifyFocusDesc': 'Notificación cuando acaba el enfoque',
+    'settings.notifyBreak': 'Al terminar descanso',
+    'settings.notifyBreakDesc': 'Notificación cuando acaba un descanso',
+    'sound.category.chimes': 'Campanas suaves',
+    'sound.category.bells': 'Campanas',
+    'sound.category.piano': 'Piano',
+    'sound.category.digital': 'Digital',
+    'sound.category.minimal': 'Minimal',
+    'sound.preset.none': 'Silencio',
+    'sound.preset.chime-major': 'Arpegio mayor',
+    'sound.preset.chime-soft': 'Campana suave',
+    'sound.preset.chime-minor': 'Arpegio menor',
+    'sound.preset.chime-crystal': 'Cristal',
+    'sound.preset.chime-floating': 'Flotante',
+    'sound.preset.bell': 'Campana clásica',
+    'sound.preset.bell-double': 'Doble campana',
+    'sound.preset.bell-temple': 'Templo',
+    'sound.preset.bell-digital': 'Campana digital',
+    'sound.preset.piano-c': 'Nota Do',
+    'sound.preset.piano-major': 'Arpegio de piano',
+    'sound.preset.piano-glass': 'Cristal de piano',
+    'sound.preset.beep-classic': 'Beep clásico',
+    'sound.preset.beep-soft': 'Beep suave',
+    'sound.preset.arcade': 'Arcade',
+    'sound.preset.ping': 'Ping',
+    'sound.preset.success': 'Éxito',
+    'sound.preset.soft-tick': 'Tick suave',
+    'sound.preset.zen': 'Zen',
+    'sound.preset.water-drop': 'Gota de agua',
     'settings.languageSection': 'Idioma',
     'settings.languageLabel': 'Idioma de la app',
     'settings.langEs': 'Español',
@@ -241,13 +304,29 @@ const MESSAGES = {
     'goal.minToday': '{current} / {target} min hoy',
     'goal.minWeek': '{current} / {target} min esta semana',
     'subject.default': 'Materia',
-    'subject.defaultName': 'Materia'
+    'subject.defaultName': 'Materia',
+    'notes.title': 'Notas',
+    'notes.subtitle': 'Tu espacio para ideas rápidas y recordatorios',
+    'notes.searchPlaceholder': 'Buscar notas…',
+    'notes.newNote': 'Nueva Nota',
+    'notes.pinnedSection': 'Fijadas',
+    'notes.otherSection': 'Otras Notas',
+    'notes.empty': 'No se encontraron notas.',
+    'notes.pin': 'Fijar',
+    'notes.pinned': 'Fijada',
+    'notes.delete': 'Eliminar nota',
+    'notes.modalContentPlaceholder': 'Escribe tu nota…',
+    'notes.lastEdited': 'Última edición: {date}',
+    'notes.lastEditedNow': 'Última edición: Ahora',
+    'notes.cancel': 'Cancelar',
+    'notes.save': 'Guardar Nota'
   },
   en: {
     'brand.tagline': 'Focus and track',
     'nav.timer': 'Timer',
     'nav.dashboard': 'Dashboard',
     'nav.subjects': 'Subjects',
+    'nav.notes': 'Notes',
     'nav.settings': 'Settings',
     'nav.collapse': 'Collapse',
     'nav.collapseMenu': 'Collapse sidebar',
@@ -272,6 +351,9 @@ const MESSAGES = {
     'timer.minus1': 'Back 1 min',
     'timer.plus1': 'Forward 1 min',
     'timer.plus5': 'Forward 5 min',
+    'timer.cyclePrev': 'Previous phase',
+    'timer.cycleNext': 'Next phase',
+    'timer.cycleReset': 'Reset cycle',
     'timer.registered': 'logged',
     'timer.goalExceeded': 'Daily goal exceeded · {current}/{target}',
     'timer.goalMet': 'Daily goal reached · {current}/{target}',
@@ -289,6 +371,13 @@ const MESSAGES = {
     'timer.hoursMinutes': '{h} h {m} min',
     'timer.hoursOnly': '{h} h',
     'timer.minutesOnly': '{m} min',
+    'sessions.editTitle': 'Edit session',
+    'sessions.updated': 'Session updated: {min} min · {name}',
+    'sessions.deleted': 'Session deleted (-{min} min)',
+    'sessions.lastDeleted': 'Last pomodoro deleted (-{min} min)',
+    'sessions.noneToDelete': 'No sessions to delete',
+    'sessions.undo': 'Undo',
+    'sessions.restored': 'Session restored (+{min} min)',
     'dash.title': 'Dashboard',
     'dash.emptyTitle': 'No data to show yet',
     'dash.emptyDesc': 'Create your first subject and complete a pomodoro to start seeing your progress here.',
@@ -343,6 +432,10 @@ const MESSAGES = {
     'dash.perSession': '/ session',
     'dash.timeline': 'Timeline',
     'dash.noSessionsDay': 'No sessions this day',
+    'dash.addSession': 'Add session',
+    'dash.editSession': 'Edit session',
+    'dash.deleteSession': 'Delete session',
+    'dash.clickToManage': 'click to manage',
     'dash.sessionN': 'Session {n}',
     'dash.noSubject': 'No subject',
     'dash.noActivity': 'No activity this day',
@@ -423,11 +516,59 @@ const MESSAGES = {
     'settings.longBreakMin': 'Long break (min)',
     'settings.cycles': 'Cycles before long break',
     'settings.dailyGoal': 'Daily pomodoro goal',
+    'settings.soundsSection': 'Sounds & alarms',
+    'settings.soundEnabled': 'Sound on finish',
+    'settings.soundEnabledDesc': 'Play a tone when a block ends',
+    'settings.soundVolume': 'Volume',
+    'settings.soundVolumeValue': '{value}%',
+    'settings.soundSpeed': 'Speed',
+    'settings.soundSpeedValue': '{value}%',
+    'settings.soundFocus': 'When pomodoro ends',
+    'settings.soundBreak': 'When short break ends',
+    'settings.soundLongBreak': 'When long break ends',
+    'settings.soundRepeat': 'Repetitions',
+    'settings.soundRepeat1': '1 time',
+    'settings.soundRepeat2': '2 times',
+    'settings.soundRepeat3': '3 times',
+    'settings.soundPreview': 'Preview sound',
+    'settings.soundChange': 'Change',
+    'settings.soundPickerTitle': 'Choose sound',
+    'settings.soundSelected': 'Active',
     'settings.notificationsSection': 'Notifications',
     'settings.autoBreak': 'Auto break',
     'settings.autoBreakDesc': 'Start the break when a pomodoro ends',
-    'settings.notifications': 'Notifications',
+    'settings.notifications': 'System notifications',
     'settings.notificationsDesc': 'Notify when a block finishes',
+    'settings.notifyFocus': 'When pomodoro ends',
+    'settings.notifyFocusDesc': 'Notification when focus ends',
+    'settings.notifyBreak': 'When break ends',
+    'settings.notifyBreakDesc': 'Notification when a break ends',
+    'sound.category.chimes': 'Soft chimes',
+    'sound.category.bells': 'Bells',
+    'sound.category.piano': 'Piano',
+    'sound.category.digital': 'Digital',
+    'sound.category.minimal': 'Minimal',
+    'sound.preset.none': 'Silent',
+    'sound.preset.chime-major': 'Major arpeggio',
+    'sound.preset.chime-soft': 'Soft chime',
+    'sound.preset.chime-minor': 'Minor arpeggio',
+    'sound.preset.chime-crystal': 'Crystal',
+    'sound.preset.chime-floating': 'Floating',
+    'sound.preset.bell': 'Classic bell',
+    'sound.preset.bell-double': 'Double bell',
+    'sound.preset.bell-temple': 'Temple',
+    'sound.preset.bell-digital': 'Digital bell',
+    'sound.preset.piano-c': 'C note',
+    'sound.preset.piano-major': 'Piano arpeggio',
+    'sound.preset.piano-glass': 'Glass piano',
+    'sound.preset.beep-classic': 'Classic beep',
+    'sound.preset.beep-soft': 'Soft beep',
+    'sound.preset.arcade': 'Arcade',
+    'sound.preset.ping': 'Ping',
+    'sound.preset.success': 'Success',
+    'sound.preset.soft-tick': 'Soft tick',
+    'sound.preset.zen': 'Zen',
+    'sound.preset.water-drop': 'Water drop',
     'settings.languageSection': 'Language',
     'settings.languageLabel': 'App language',
     'settings.langEs': 'Español',
@@ -483,7 +624,22 @@ const MESSAGES = {
     'goal.minToday': '{current} / {target} min today',
     'goal.minWeek': '{current} / {target} min this week',
     'subject.default': 'Subject',
-    'subject.defaultName': 'Subject'
+    'subject.defaultName': 'Subject',
+    'notes.title': 'Notes',
+    'notes.subtitle': 'Your space for quick ideas and reminders',
+    'notes.searchPlaceholder': 'Search notes…',
+    'notes.newNote': 'New Note',
+    'notes.pinnedSection': 'Pinned',
+    'notes.otherSection': 'Other Notes',
+    'notes.empty': 'No notes found.',
+    'notes.pin': 'Pin',
+    'notes.pinned': 'Pinned',
+    'notes.delete': 'Delete note',
+    'notes.modalContentPlaceholder': 'Write your note…',
+    'notes.lastEdited': 'Last edited: {date}',
+    'notes.lastEditedNow': 'Last edited: Now',
+    'notes.cancel': 'Cancel',
+    'notes.save': 'Save Note'
   }
 };
 
@@ -492,7 +648,15 @@ const DOM_BINDINGS = [
   { sel: 'nav button[data-view="timer"] .nav-label', key: 'nav.timer' },
   { sel: 'nav button[data-view="dashboard"] .nav-label', key: 'nav.dashboard' },
   { sel: 'nav button[data-view="materias"] .nav-label', key: 'nav.subjects' },
+  { sel: 'nav button[data-view="notas"] .nav-label', key: 'nav.notes' },
   { sel: 'nav button[data-view="ajustes"] .nav-label', key: 'nav.settings' },
+  { sel: '#notesTitle', key: 'notes.title' },
+  { sel: '#notesSubtitle', key: 'notes.subtitle' },
+  { sel: '#notesSearch', key: 'notes.searchPlaceholder', attr: 'placeholder' },
+  { sel: '#notesNewBtn span', key: 'notes.newNote' },
+  { sel: '#noteContentInput', key: 'notes.modalContentPlaceholder', attr: 'placeholder' },
+  { sel: '#noteModalCancelBtn', key: 'notes.cancel' },
+  { sel: '#noteModalSaveBtn', key: 'notes.save' },
   { sel: '.nav-toggle-label', key: 'nav.collapse' },
   { sel: '#liveSessionBtn', key: 'live.backToTimer', attr: 'aria-label' },
   { sel: '#subjectSelectLabel', key: 'timer.selectSubject' },
@@ -504,6 +668,12 @@ const DOM_BINDINGS = [
   { sel: '#minus1Btn', key: 'timer.minus1', attr: 'title' },
   { sel: '#plus1Btn', key: 'timer.plus1', attr: 'title' },
   { sel: '#plus5Btn', key: 'timer.plus5', attr: 'title' },
+  { sel: '#cyclePrevBtn', key: 'timer.cyclePrev', attr: 'title' },
+  { sel: '#cyclePrevBtn', key: 'timer.cyclePrev', attr: 'aria-label' },
+  { sel: '#cycleNextBtn', key: 'timer.cycleNext', attr: 'title' },
+  { sel: '#cycleNextBtn', key: 'timer.cycleNext', attr: 'aria-label' },
+  { sel: '#cycleResetBtn', key: 'timer.cycleReset', attr: 'title' },
+  { sel: '#cycleResetBtn', key: 'timer.cycleReset', attr: 'aria-label' },
   { sel: '#view-dashboard .dash-header h2', key: 'dash.title' },
   { sel: '#dashEmptyWrap h3', key: 'dash.emptyTitle' },
   { sel: '#dashEmptyWrap p', key: 'dash.emptyDesc' },
@@ -558,7 +728,8 @@ const DOM_BINDINGS = [
   { sel: '#view-ajustes .settings-grid .field:nth-child(3) label', key: 'settings.longBreakMin' },
   { sel: '#view-ajustes .settings-grid .field:nth-child(4) label', key: 'settings.cycles' },
   { sel: '#view-ajustes .settings-grid .field:nth-child(5) label', key: 'settings.dailyGoal' },
-  { sel: '#view-ajustes .settings-column:first-child .settings-section:nth-child(2) .settings-section-title', key: 'settings.notificationsSection' },
+  { sel: '#view-ajustes .settings-column:first-child .settings-section:nth-child(2) .settings-section-title', key: 'settings.soundsSection' },
+  { sel: '#view-ajustes .settings-column:first-child .settings-section:nth-child(3) .settings-section-title', key: 'settings.notificationsSection' },
   { sel: '#languageSectionTitle', key: 'settings.languageSection' },
   { sel: 'label[for="languageSelect"]', key: 'settings.languageLabel' },
   { sel: '#dataSectionTitle', key: 'settings.dataSection' },
@@ -606,6 +777,7 @@ const DOM_BINDINGS = [
   { sel: '#dayDetailChipCount', key: 'dash.pomodoros', suffix: ' suffix' },
   { sel: '#dayDetailChipAvg', key: 'dash.perSession', suffix: ' suffix' },
   { sel: '.day-detail-section-title', key: 'dash.timeline' },
+  { sel: '#dayDetailAddBtn', key: 'dash.addSession', attr: 'aria-label' },
   { sel: '#streakDetailHeading', key: 'streak.title' },
   { sel: '.streak-detail-label', key: 'streak.days' }
 ];
@@ -738,11 +910,71 @@ function updateToggleLabels() {
     autoToggle.querySelector('.field-toggle-label').textContent = t('settings.autoBreak');
     autoToggle.querySelector('.field-toggle-desc').textContent = t('settings.autoBreakDesc');
   }
-  const notifyToggle = document.getElementById('notifyOnFinishInput')?.closest('.field-toggle');
-  if (notifyToggle) {
-    notifyToggle.querySelector('.field-toggle-label').textContent = t('settings.notifications');
-    notifyToggle.querySelector('.field-toggle-desc').textContent = t('settings.notificationsDesc');
+  const notifyAllToggle = document.getElementById('notifyOnFinishInput')?.closest('.field-toggle');
+  if (notifyAllToggle) {
+    notifyAllToggle.querySelector('.field-toggle-label').textContent = t('settings.notifications');
+    notifyAllToggle.querySelector('.field-toggle-desc').textContent = t('settings.notificationsDesc');
   }
+  const notifyFocusToggle = document.getElementById('notifyOnFocusFinishInput')?.closest('.field-toggle');
+  if (notifyFocusToggle) {
+    notifyFocusToggle.querySelector('.field-toggle-label').textContent = t('settings.notifyFocus');
+    notifyFocusToggle.querySelector('.field-toggle-desc').textContent = t('settings.notifyFocusDesc');
+  }
+  const notifyBreakToggle = document.getElementById('notifyOnBreakFinishInput')?.closest('.field-toggle');
+  if (notifyBreakToggle) {
+    notifyBreakToggle.querySelector('.field-toggle-label').textContent = t('settings.notifyBreak');
+    notifyBreakToggle.querySelector('.field-toggle-desc').textContent = t('settings.notifyBreakDesc');
+  }
+  const soundToggle = document.getElementById('soundEnabledInput')?.closest('.field-toggle');
+  if (soundToggle) {
+    soundToggle.querySelector('.field-toggle-label').textContent = t('settings.soundEnabled');
+    soundToggle.querySelector('.field-toggle-desc').textContent = t('settings.soundEnabledDesc');
+  }
+}
+
+function updateSoundSettingsLabels() {
+  const map = [
+    ['soundVolumeLabel', 'settings.soundVolume'],
+    ['soundSpeedLabel', 'settings.soundSpeed'],
+    ['soundFocusLabel', 'settings.soundFocus'],
+    ['soundBreakLabel', 'settings.soundBreak'],
+    ['soundLongBreakLabel', 'settings.soundLongBreak'],
+    ['soundRepeatLabel', 'settings.soundRepeat']
+  ];
+  map.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+
+  const volumeValue = document.getElementById('soundVolumeValue');
+  const volumeInput = document.getElementById('soundVolumeInput');
+  if (volumeValue && volumeInput) {
+    volumeValue.textContent = t('settings.soundVolumeValue', { value: volumeInput.value });
+  }
+
+  const speedValue = document.getElementById('soundSpeedValue');
+  const speedInput = document.getElementById('soundSpeedInput');
+  if (speedValue && speedInput) {
+    speedValue.textContent = t('settings.soundSpeedValue', { value: speedInput.value });
+  }
+
+  ['soundFocusAction', 'soundBreakAction', 'soundLongBreakAction'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t('settings.soundChange');
+  });
+
+  const pickerTitle = document.getElementById('soundPickerTitle');
+  if (pickerTitle && !document.getElementById('soundPickerPanel')?.classList.contains('hidden')) {
+    pickerTitle.textContent = t('settings.soundPickerTitle');
+  }
+
+  document.querySelectorAll('.sound-slot-play').forEach((btn) => {
+    btn.setAttribute('aria-label', t('settings.soundPreview'));
+    btn.title = t('settings.soundPreview');
+  });
+
+  const closeBtn = document.getElementById('soundPickerClose');
+  if (closeBtn) closeBtn.setAttribute('aria-label', t('settings.cancel'));
 }
 
 function updateStreakBestLabel() {
@@ -762,7 +994,7 @@ function updateDataSectionSecondGroup() {
     if (subtitle) subtitle.textContent = t('settings.dataTitle');
     if (desc) desc.textContent = t('settings.dataDesc');
   }
-  const deleteLastBtn = document.querySelector('#addManualBtn')?.closest('.settings-actions')?.querySelector('.btn-danger');
+  const deleteLastBtn = document.getElementById('deleteLastBtn');
   if (deleteLastBtn) setButtonText(deleteLastBtn, t('settings.deleteLast'));
 }
 
@@ -797,6 +1029,7 @@ export function applyStaticTranslations() {
 
   DOM_BINDINGS.forEach(applyBinding);
   updateToggleLabels();
+  updateSoundSettingsLabels();
   updateStreakBestLabel();
   updateDataSectionSecondGroup();
   updateNavToggleAria();

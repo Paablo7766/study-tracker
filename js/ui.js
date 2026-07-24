@@ -1,18 +1,46 @@
 import { t } from './i18n.js';
 
-export function showToast(message) {
+function dismissToast() {
   const toast = document.getElementById('toast');
-  toast.innerHTML = `<span class="toast-check"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>${message}`;
-  toast.classList.remove('hidden');
-  requestAnimationFrame(() => toast.classList.add('show'));
-  clearTimeout(window._toastTimeout);
-  window._toastTimeout = setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.classList.add('hidden'), 250);
-  }, 3000);
+  toast.classList.remove('show');
+  setTimeout(() => toast.classList.add('hidden'), 250);
 }
 
-const views = ['timer', 'dashboard', 'materias', 'tareas', 'ajustes'];
+export function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `<span class="toast-check"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="toast-message">${message}</span>`;
+  toast.classList.remove('hidden', 'toast--undo');
+  requestAnimationFrame(() => toast.classList.add('show'));
+  clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(dismissToast, 3000);
+}
+
+export function showUndoToast({ message, undoLabel, onUndo, duration = 8000 }) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  toast.innerHTML = `
+    <span class="toast-check toast-check--warn"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></span>
+    <span class="toast-message">${message}</span>
+    <button type="button" class="toast-undo-btn">${undoLabel}</button>`;
+  toast.classList.remove('hidden');
+  toast.classList.add('toast--undo');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => toast.classList.add('show'));
+  });
+
+  const undoBtn = toast.querySelector('.toast-undo-btn');
+  undoBtn?.addEventListener('click', () => {
+    clearTimeout(window._toastTimeout);
+    dismissToast();
+    onUndo?.();
+  });
+
+  clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(dismissToast, duration);
+}
+
+const views = ['timer', 'dashboard', 'materias', 'notas', 'ajustes'];
 const MOBILE_NAV_MQ = window.matchMedia('(max-width: 780px)');
 const NAV_TRANSITION_MS = 420;
 
@@ -72,10 +100,10 @@ function playViewTransition(section) {
 
 /**
  * Navegación entre vistas.
- * @param {{ onShowDashboard?: () => void, onShowMaterias?: () => void, onViewChange?: (view: string) => void }} [hooks]
+ * @param {{ onShowDashboard?: () => void, onShowMaterias?: () => void, onShowNotes?: () => void, onViewChange?: (view: string) => void }} [hooks]
  *   Callbacks inyectados desde app.js para evitar imports circulares.
  */
-export function initNavigation({ onShowDashboard, onShowMaterias, onViewChange } = {}) {
+export function initNavigation({ onShowDashboard, onShowMaterias, onShowNotes, onViewChange } = {}) {
   const mainEl = document.querySelector('main');
 
   document.querySelectorAll('nav button[data-view]').forEach(btn => {
@@ -91,6 +119,7 @@ export function initNavigation({ onShowDashboard, onShowMaterias, onViewChange }
 
       if (view === 'dashboard') onShowDashboard?.();
       if (view === 'materias') onShowMaterias?.();
+      if (view === 'notas') onShowNotes?.();
       mainEl.scrollTop = 0;
       window.scrollTo(0, 0);
 

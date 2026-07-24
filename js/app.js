@@ -10,23 +10,26 @@ import {
   renderSubjectContext,
   renderCycleTrack,
   updateCycleTrackFill,
+  refreshCycleTrackControls,
   refreshTimerLabels,
   resetTimerFromSettings
 } from './timer.js';
 import { loadSettingsForm, initSettings } from './settings.js';
 import { initStreakModal } from './streak-modal.js';
 import { initI18n, applyLanguage } from './i18n.js';
-import { initTasks } from './tasks.js';
+import { initNotes, refreshNotesIfVisible, renderNotes } from './notes.js';
 
 function refreshUIAfterLanguageChange() {
   loadSettingsForm();
   renderSubjectSelects();
   renderMaterias();
   refreshStatsIfVisible();
+  refreshNotesIfVisible();
   updateTimerDisplay();
   renderSubjectProgress();
   renderSubjectContext();
   updateCycleTrackFill();
+  refreshCycleTrackControls();
   updateLiveSessionUI();
   refreshTimerLabels();
 }
@@ -39,6 +42,7 @@ async function bootstrap() {
       renderMaterias();
       resetTimerFromSettings();
       refreshStatsIfVisible();
+      refreshNotesIfVisible();
     }
   });
 
@@ -54,13 +58,14 @@ async function bootstrap() {
   initNavigation({
     onShowDashboard: showDashboard,
     onShowMaterias: renderMaterias,
+    onShowNotes: () => renderNotes(),
     onViewChange: () => updateLiveSessionUI()
   });
 
   initSubjects();
   initTimer();
   initSettings();
-  initTasks();
+  initNotes();
   initDashboard();
 
   renderSubjectSelects();
@@ -71,6 +76,7 @@ async function bootstrap() {
   renderSubjectContext();
   renderCycleTrack();
   updateCycleTrackFill();
+  refreshCycleTrackControls();
   updateLiveSessionUI();
 }
 

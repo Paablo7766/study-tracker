@@ -44,9 +44,9 @@
           <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
           <span class="nav-label">Materias</span>
         </button>
-        <button type="button" data-view="tareas" class="nav-item">
-          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>
-          <span class="nav-label">Tareas</span>
+        <button type="button" data-view="notas" class="nav-item">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          <span class="nav-label">Notas</span>
         </button>
         <button type="button" data-view="ajustes" class="nav-item">
           <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
@@ -137,7 +137,16 @@
           <button class="adjust-btn" id="plus5Btn" title="Adelantar 5 min">+5</button>
         </div>
 
-        <div class="cycle-track" id="cycleTrack"></div>
+        <div class="cycle-track-wrap" id="cycleTrackWrap">
+          <div class="cycle-track-bar-wrap">
+            <div class="cycle-track-controls" aria-hidden="true">
+              <button type="button" class="cycle-ctrl-btn" id="cyclePrevBtn" title="Retroceder fase" aria-label="Retroceder fase">‹</button>
+              <button type="button" class="cycle-ctrl-btn cycle-ctrl-reset" id="cycleResetBtn" title="Reiniciar ciclo" aria-label="Reiniciar ciclo">↺</button>
+              <button type="button" class="cycle-ctrl-btn" id="cycleNextBtn" title="Avanzar fase" aria-label="Avanzar fase">›</button>
+            </div>
+            <div class="cycle-track" id="cycleTrack"></div>
+          </div>
+        </div>
 
         <div class="btn-row" id="mainBtnRow">
           <button class="btn btn-primary" id="startBtn">Iniciar</button>
@@ -152,7 +161,6 @@
           </div>
         </div>
 
-        <div id="toast" class="toast hidden"></div>
       </div>
 
     </section>
@@ -442,39 +450,31 @@
       <div id="subjectList" class="subjects-grid"></div>
     </section>
 
-    <section id="view-tareas" class="hidden">
-      <div class="tasks-wrap">
-
-        <div class="dash-header">
-          <div>
-            <h2 style="margin:0;letter-spacing:-0.4px">Brain Dump</h2>
-            <p class="tasks-subtitle">Vacía tu mente. Organiza después.</p>
+    <section id="view-notas" class="hidden">
+      <div class="notes-wrap">
+        <header class="notes-header">
+          <div class="notes-header-copy">
+            <h2 id="notesTitle" class="notes-title">Notas</h2>
+            <p id="notesSubtitle" class="notes-subtitle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Tu espacio para ideas rápidas y recordatorios
+            </p>
           </div>
-          <div class="tasks-search-wrap">
-            <svg class="tasks-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" id="tasksSearch" placeholder="Buscar…" class="tasks-search-input" autocomplete="off">
+          <div class="notes-toolbar">
+            <div class="notes-search-wrap">
+              <svg class="notes-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="notesSearch" class="notes-search-input" placeholder="Buscar notas…" autocomplete="off">
+            </div>
+            <button type="button" id="notesNewBtn" class="notes-new-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Nueva Nota</span>
+            </button>
           </div>
-        </div>
+        </header>
 
-        <div class="tasks-quick-add-wrap">
-          <div class="tasks-quick-add-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </div>
-          <input
-            type="text"
-            id="tasksQuickAdd"
-            placeholder="Nueva tarea o idea… → Enter para guardar"
-            class="tasks-quick-add-input"
-            autocomplete="off"
-          >
-        </div>
-
-        <div id="tasksBoard" class="tasks-board"></div>
-
+        <div id="notesBoard" class="notes-board"></div>
       </div>
     </section>
 
@@ -511,6 +511,111 @@
             <div class="settings-section">
               <div class="settings-section-head">
                 <span class="settings-section-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                </span>
+                <p class="settings-section-title" id="soundsSectionTitle">Sonidos y alarmas</p>
+              </div>
+              <div class="card settings-card" id="soundsSettingsCard">
+                <div class="field-toggle field-toggle--first">
+                  <div class="field-toggle-text">
+                    <p class="field-toggle-label" id="soundEnabledLabel">Sonido al terminar</p>
+                    <p class="field-toggle-desc" id="soundEnabledDesc">Reproduce un tono cuando acaba un bloque</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="soundEnabledInput">
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </label>
+                </div>
+
+                <div class="sound-settings-body" id="soundSettingsBody">
+                  <div class="sound-controls-row sound-controls-row--primary">
+                    <div class="sound-control sound-control--volume">
+                      <div class="sound-control-head">
+                        <label id="soundVolumeLabel">Volumen</label>
+                        <span class="sound-volume-value" id="soundVolumeValue">70%</span>
+                      </div>
+                      <input type="range" id="soundVolumeInput" min="0" max="100" value="70" step="1" aria-labelledby="soundVolumeLabel">
+                    </div>
+
+                    <div class="sound-control sound-control--speed">
+                      <div class="sound-control-head">
+                        <label id="soundSpeedLabel">Velocidad</label>
+                        <span class="sound-volume-value" id="soundSpeedValue">100%</span>
+                      </div>
+                      <input type="range" id="soundSpeedInput" min="50" max="200" value="100" step="5" aria-labelledby="soundSpeedLabel">
+                    </div>
+                  </div>
+
+                  <div class="sound-controls-row sound-controls-row--repeat">
+                    <div class="sound-control sound-control--repeat">
+                      <label id="soundRepeatLabel">Repeticiones</label>
+                      <div class="sound-repeat-group" id="soundRepeatGroup" role="radiogroup" aria-labelledby="soundRepeatLabel">
+                        <button type="button" class="sound-repeat-btn is-active" data-value="1">1×</button>
+                        <button type="button" class="sound-repeat-btn" data-value="2">2×</button>
+                        <button type="button" class="sound-repeat-btn" data-value="3">3×</button>
+                      </div>
+                      <input type="hidden" id="soundRepeatSelect" value="1">
+                    </div>
+                  </div>
+
+                  <div class="sound-slots" id="soundSlots">
+                    <div class="sound-slot" data-slot="focus">
+                      <div class="sound-slot-top">
+                        <span class="sound-slot-label" id="soundFocusLabel">Al terminar pomodoro</span>
+                        <button type="button" class="sound-slot-play" id="soundFocusPreview" data-select="soundFocusSelect" aria-label="Probar sonido">
+                          <span class="sound-play-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+                        </button>
+                      </div>
+                      <button type="button" class="sound-slot-trigger" data-select="soundFocusSelect">
+                        <span class="sound-slot-name" id="soundFocusName">Arpegio mayor</span>
+                        <span class="sound-slot-action" id="soundFocusAction">Cambiar</span>
+                      </button>
+                      <select id="soundFocusSelect" class="sr-only-select" tabindex="-1" aria-hidden="true"></select>
+                    </div>
+
+                    <div class="sound-slot" data-slot="break">
+                      <div class="sound-slot-top">
+                        <span class="sound-slot-label" id="soundBreakLabel">Al terminar descanso corto</span>
+                        <button type="button" class="sound-slot-play" id="soundBreakPreview" data-select="soundBreakSelect" aria-label="Probar sonido">
+                          <span class="sound-play-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+                        </button>
+                      </div>
+                      <button type="button" class="sound-slot-trigger" data-select="soundBreakSelect">
+                        <span class="sound-slot-name" id="soundBreakName">Campana suave</span>
+                        <span class="sound-slot-action" id="soundBreakAction">Cambiar</span>
+                      </button>
+                      <select id="soundBreakSelect" class="sr-only-select" tabindex="-1" aria-hidden="true"></select>
+                    </div>
+
+                    <div class="sound-slot" data-slot="longBreak">
+                      <div class="sound-slot-top">
+                        <span class="sound-slot-label" id="soundLongBreakLabel">Al terminar descanso largo</span>
+                        <button type="button" class="sound-slot-play" id="soundLongBreakPreview" data-select="soundLongBreakSelect" aria-label="Probar sonido">
+                          <span class="sound-play-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+                        </button>
+                      </div>
+                      <button type="button" class="sound-slot-trigger" data-select="soundLongBreakSelect">
+                        <span class="sound-slot-name" id="soundLongBreakName">Templo</span>
+                        <span class="sound-slot-action" id="soundLongBreakAction">Cambiar</span>
+                      </button>
+                      <select id="soundLongBreakSelect" class="sr-only-select" tabindex="-1" aria-hidden="true"></select>
+                    </div>
+                  </div>
+
+                  <div class="sound-picker-panel hidden" id="soundPickerPanel" role="dialog" aria-modal="true" aria-labelledby="soundPickerTitle">
+                    <div class="sound-picker-head">
+                      <p class="sound-picker-title" id="soundPickerTitle">Elegir sonido</p>
+                      <button type="button" class="sound-picker-close" id="soundPickerClose" aria-label="Cerrar">×</button>
+                    </div>
+                    <div class="sound-picker-list" id="soundPickerList"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-head">
+                <span class="settings-section-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 </span>
                 <p class="settings-section-title">Notificaciones</p>
@@ -526,13 +631,33 @@
                     <span class="switch-track"><span class="switch-thumb"></span></span>
                   </label>
                 </div>
-                <div class="field-toggle field-toggle--last">
+                <div class="field-toggle">
                   <div class="field-toggle-text">
-                    <p class="field-toggle-label">Notificaciones</p>
-                    <p class="field-toggle-desc">Avisa al terminar un bloque</p>
+                    <p class="field-toggle-label" id="notifyAllLabel">Notificaciones del sistema</p>
+                    <p class="field-toggle-desc" id="notifyAllDesc">Avisa al terminar un bloque</p>
                   </div>
                   <label class="switch">
                     <input type="checkbox" id="notifyOnFinishInput">
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </label>
+                </div>
+                <div class="field-toggle">
+                  <div class="field-toggle-text">
+                    <p class="field-toggle-label" id="notifyFocusLabel">Al terminar pomodoro</p>
+                    <p class="field-toggle-desc" id="notifyFocusDesc">Notificación cuando acaba el enfoque</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="notifyOnFocusFinishInput">
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                  </label>
+                </div>
+                <div class="field-toggle field-toggle--last">
+                  <div class="field-toggle-text">
+                    <p class="field-toggle-label" id="notifyBreakLabel">Al terminar descanso</p>
+                    <p class="field-toggle-desc" id="notifyBreakDesc">Notificación cuando acaba un descanso</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="notifyOnBreakFinishInput">
                     <span class="switch-track"><span class="switch-thumb"></span></span>
                   </label>
                 </div>
@@ -583,7 +708,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                         Añadir pomodoro
                       </button>
-                      <button class="btn btn-danger settings-action" onclick="eliminarUltimoPomodoro()">
+                      <button class="btn btn-danger settings-action" id="deleteLastBtn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                         Borrar último
                       </button>
@@ -641,32 +766,6 @@
           <div class="btn-row">
             <button class="btn btn-danger" id="wipeDataConfirmBtn">Borrar todo</button>
             <button class="btn btn-secondary" id="wipeDataCancelBtn">Cancelar</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="manualModal" class="modal-overlay hidden">
-        <div class="modal-card">
-          <h3>Añadir pomodoro manual</h3>
-          <div class="field">
-            <label>Materia</label>
-            <select id="manualSubject"></select>
-          </div>
-          <div class="field">
-            <label>Duración (minutos)</label>
-            <input type="number" id="manualDuration" value="25" min="1">
-          </div>
-          <div class="field">
-            <label>Fecha y hora</label>
-            <input type="datetime-local" id="manualDatetime">
-          </div>
-          <div class="field">
-            <label>Notas (opcional)</label>
-            <textarea id="manualNotes" rows="2" placeholder="¿Qué estudiaste?"></textarea>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" id="manualSaveBtn">Guardar sesión</button>
-            <button class="btn btn-secondary" id="manualCancelBtn">Cancelar</button>
           </div>
         </div>
       </div>
@@ -775,6 +874,32 @@
   </div>
 </div>
 
+<div id="manualModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3>Añadir pomodoro manual</h3>
+    <div class="field">
+      <label>Materia</label>
+      <select id="manualSubject"></select>
+    </div>
+    <div class="field">
+      <label>Duración (minutos)</label>
+      <input type="number" id="manualDuration" value="25" min="1">
+    </div>
+    <div class="field">
+      <label>Fecha y hora</label>
+      <input type="datetime-local" id="manualDatetime">
+    </div>
+    <div class="field">
+      <label>Notas (opcional)</label>
+      <textarea id="manualNotes" rows="2" placeholder="¿Qué estudiaste?"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="manualSaveBtn">Guardar sesión</button>
+      <button class="btn btn-secondary" id="manualCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="deleteSubjectModal" class="modal-overlay hidden">
   <div class="modal-card">
     <h3>¿Eliminar "<span id="deleteSubjectName"></span>"?</h3>
@@ -796,7 +921,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
       <h3 class="day-detail-eyebrow" id="dayDetailTitle">Día</h3>
-      <div class="day-detail-spacer"></div>
+      <button type="button" class="day-detail-add" id="dayDetailAddBtn" aria-label="Añadir sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
     </div>
 
     <div class="day-detail-hero">
@@ -854,6 +981,28 @@
     </div>
   </div>
 </div>
+
+<div id="noteModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+  <div class="note-modal-card">
+    <div class="note-modal-top">
+      <button type="button" class="note-modal-close" id="noteModalCloseBtn" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="note-modal-body">
+      <textarea id="noteContentInput" class="note-content-input" placeholder="Escribe tu nota…" rows="8"></textarea>
+    </div>
+    <div class="note-modal-foot">
+      <span id="noteEditedLabel" class="note-edited-label">Última edición: Ahora</span>
+      <div class="note-modal-actions">
+        <button type="button" class="note-modal-cancel" id="noteModalCancelBtn">Cancelar</button>
+        <button type="button" class="note-modal-save" id="noteModalSaveBtn">Guardar Nota</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <script type="module" src="js/app.js"></script>
 <script>

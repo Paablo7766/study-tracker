@@ -75,8 +75,10 @@ function buildUnitsActionButtons(s) {
   const atMin = current <= 0;
   const atMax = current >= target;
 
-  return `<button type="button" class="icon-btn"${atMin ? ' disabled' : ''} title="${t('subjects.unitDown', { unit: unitSingular })}" aria-label="${t('subjects.unitRemove', { unit: unitSingular })}" data-action="unit-minus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
-      <button type="button" class="icon-btn"${atMax ? ' disabled' : ''} title="${t('subjects.unitUp', { unit: unitSingular })}" aria-label="${t('subjects.unitComplete', { unit: unitSingular })}" data-action="unit-plus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>`;
+  return `<div class="card-actions-units">
+      <button type="button" class="icon-btn"${atMin ? ' disabled' : ''} title="${t('subjects.unitDown', { unit: unitSingular })}" aria-label="${t('subjects.unitRemove', { unit: unitSingular })}" data-action="unit-minus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="icon-btn"${atMax ? ' disabled' : ''} title="${t('subjects.unitUp', { unit: unitSingular })}" aria-label="${t('subjects.unitComplete', { unit: unitSingular })}" data-action="unit-plus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
+    </div>`;
 }
 
 function buildSubjectCard(s, weekStart) {

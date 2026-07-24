@@ -1,18 +1,19 @@
 import { data, saveData, applySessionToStats, ensureStatsFresh } from './storage.js';
-import { uid, toLocalDatetimeInputValue, startOfWeekMonday } from './utils.js';
+import { uid, startOfWeekMonday } from './utils.js';
 import { showToast, navigateTo } from './ui.js';
 import { refreshStatsIfVisible, showStreakCelebration } from './dashboard.js';
+import { initSessionModal } from './sessions.js';
 import { getSubjectGoalProgress } from './subjectGoals.js';
 import { t } from './i18n.js';
+import {
+  playSoundPreset,
+  DEFAULT_SOUND_FOCUS,
+  DEFAULT_SOUND_BREAK,
+  DEFAULT_SOUND_LONG_BREAK
+} from './sounds.js';
 
 const ORIGINAL_TITLE = document.title;
 const CIRCUM = 2 * Math.PI * 54;
-const SOUND_LIBRARY = {
-  'chime-major': [523.25, 659.25, 784.0],
-  'chime-soft': [392.0, 523.25],
-  'bell': [660.0],
-  'none': []
-};
 
 let mode = 'focus';
 let secondsLeft = data.settings.focusMin * 60;
@@ -38,6 +39,61 @@ function formatHoursMinutes(totalMin) {
   if (h <= 0) return t('timer.minutesOnly', { m });
   if (m === 0) return t('timer.hoursOnly', { h });
   return t('timer.hoursMinutes', { h, m });
+}
+
+function getCyclesBeforeLongBreak() {
+  return Math.max(1, data.settings.cyclesBeforeLongBreak || 4);
+}
+
+function encodeCycleStep(cycles, currentMode) {
+  const n = getCyclesBeforeLongBreak();
+  if (currentMode === 'longBreak') return 2 * n - 1;
+  if (currentMode === 'break') return 2 * cycles - 1;
+  const slot = cycles % n;
+  return 2 * slot;
+}
+
+function decodeCycleStep(step, n) {
+  if (step >= 2 * n) return { cycles: 0, mode: 'focus' };
+  if (step === 2 * n - 1) return { cycles: n, mode: 'longBreak' };
+  if (step % 2 === 0) return { cycles: step / 2, mode: 'focus' };
+  return { cycles: (step + 1) / 2, mode: 'break' };
+}
+
+function applyCyclePosition(cycles, nextMode) {
+  cyclesCompleted = cycles;
+  mode = nextMode;
+  secondsLeft = getModeTotalSeconds();
+  pendingNextMode = null;
+  sessionStart = null;
+  document.getElementById('mainBtnRow').classList.remove('hidden');
+  document.getElementById('nextModeRow').classList.add('hidden');
+  document.getElementById('timerCircleWrap').classList.remove('running', 'paused', 'completed');
+  document.getElementById('startBtn').textContent = t('timer.start');
+  renderCycleTrack();
+  updateTimerDisplay();
+}
+
+function stepCycleTrack(delta) {
+  if (isRunning || isPaused) return;
+  const n = getCyclesBeforeLongBreak();
+  const maxStep = 2 * n - 1;
+  let step = encodeCycleStep(cyclesCompleted, mode) + delta;
+  if (step < 0) step = 0;
+  if (step > maxStep) step = 0;
+  const { cycles, mode: nextMode } = decodeCycleStep(step, n);
+  applyCyclePosition(cycles, nextMode);
+}
+
+function resetCycleTrack() {
+  if (isRunning || isPaused) return;
+  applyCyclePosition(0, 'focus');
+}
+
+export function refreshCycleTrackControls() {
+  const wrap = document.getElementById('cycleTrackWrap');
+  if (!wrap) return;
+  wrap.classList.toggle('cycle-track-wrap--locked', isRunning || isPaused);
 }
 
 export function refreshTimerLabels() {
@@ -100,6 +156,7 @@ export function updateTimerDisplay() {
 
   updateLiveSessionUI();
   refreshTimerLabels();
+  refreshCycleTrackControls();
 }
 
 function getModeTotalSeconds() {
@@ -208,6 +265,8 @@ function tick() {
 
 function notifyModeFinished(finishedMode) {
   if (!data.settings.notifyOnFinish) return;
+  if (finishedMode === 'focus' && data.settings.notifyOnFocusFinish === false) return;
+  if (finishedMode !== 'focus' && data.settings.notifyOnBreakFinish === false) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const label = finishedMode === 'focus' ? t('timer.notifyFocusTitle') : t('timer.notifyBreakTitle');
   const body = finishedMode === 'focus' ? t('timer.notifyFocusBody') : t('timer.notifyBreakBody');
@@ -242,7 +301,7 @@ function finishCurrentMode() {
   if (finishedMode === 'focus') {
     saveSession();
     cyclesCompleted++;
-    nextMode = (cyclesCompleted % data.settings.cyclesBeforeLongBreak === 0) ? 'longBreak' : 'break';
+    nextMode = (cyclesCompleted % getCyclesBeforeLongBreak() === 0) ? 'longBreak' : 'break';
   } else {
     nextMode = 'focus';
     sessionStart = null;
@@ -301,41 +360,19 @@ function endFlowReadyForFocus() {
   updateTimerDisplay();
 }
 
-function playSoundKey(key) {
-  if (!key || key === 'none' || !SOUND_LIBRARY[key]) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = SOUND_LIBRARY[key];
-    const now = ctx.currentTime;
-
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-
-      const startTime = now + i * 0.12;
-      const attackTime = 0.05;
-      const releaseTime = 1.1;
-      const peakVolume = 0.11;
-
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(peakVolume, startTime + attackTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + attackTime + releaseTime);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + attackTime + releaseTime + 0.05);
-    });
-
-    setTimeout(() => ctx.close(), 1600);
-  } catch (e) { /* AudioContext no disponible */ }
-}
-
 function playBeep() {
-  const key = mode === 'focus' ? 'chime-major' : 'chime-soft';
-  playSoundKey(key);
+  if (data.settings.soundEnabled === false) return;
+
+  let key;
+  if (mode === 'focus') key = data.settings.soundFocus || DEFAULT_SOUND_FOCUS;
+  else if (mode === 'break') key = data.settings.soundBreak || DEFAULT_SOUND_BREAK;
+  else key = data.settings.soundLongBreak || DEFAULT_SOUND_LONG_BREAK;
+
+  playSoundPreset(key, {
+    volume: (data.settings.soundVolume ?? 70) / 100,
+    repeat: data.settings.soundRepeat ?? 1,
+    speed: data.settings.soundSpeed ?? 100
+  });
 }
 
 function saveSession() {
@@ -414,7 +451,7 @@ export function renderSubjectProgress() {
 
 export function renderCycleTrack() {
   const container = document.getElementById('cycleTrack');
-  const totalFocus = data.settings.cyclesBeforeLongBreak;
+  const totalFocus = getCyclesBeforeLongBreak();
   let html = '';
   for (let i = 0; i < totalFocus; i++) {
     html += `<div class="cycle-seg seg-focus" data-kind="focus" data-index="${i}"><div class="cycle-seg-fill"></div></div>`;
@@ -430,7 +467,7 @@ export function renderCycleTrack() {
 export function updateCycleTrackFill() {
   const container = document.getElementById('cycleTrack');
   if (!container) return;
-  const totalFocus = data.settings.cyclesBeforeLongBreak;
+  const totalFocus = getCyclesBeforeLongBreak();
   if (Number(container.dataset.builtFor) !== totalFocus) renderCycleTrack();
 
   const slotInCycle = cyclesCompleted % totalFocus;
@@ -506,19 +543,7 @@ export function resetTimerFromSettings() {
   renderSubjectContext();
   renderCycleTrack();
   updateCycleTrackFill();
-}
-
-function openManualModal() {
-  const sel = document.getElementById('manualSubject');
-  sel.innerHTML = data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('manualDuration').value = data.settings.focusMin;
-  document.getElementById('manualDatetime').value = toLocalDatetimeInputValue(new Date());
-  document.getElementById('manualNotes').value = '';
-  document.getElementById('manualModal').classList.remove('hidden');
-}
-
-function closeManualModal() {
-  document.getElementById('manualModal').classList.add('hidden');
+  refreshCycleTrackControls();
 }
 
 function adjustClock(deltaSeconds) {
@@ -604,44 +629,12 @@ export function initTimer() {
   document.getElementById('plus1Btn').addEventListener('click', () => adjustClock(1 * 60));
   document.getElementById('plus5Btn').addEventListener('click', () => adjustClock(5 * 60));
 
-  document.getElementById('addManualBtn').addEventListener('click', openManualModal);
-  document.getElementById('manualCancelBtn').addEventListener('click', closeManualModal);
-  document.getElementById('manualModal').addEventListener('click', (e) => {
-    if (e.target.id === 'manualModal') closeManualModal();
-  });
-
-  document.getElementById('manualSaveBtn').addEventListener('click', () => {
-    const subjectId = document.getElementById('manualSubject').value;
-    const durationMin = parseInt(document.getElementById('manualDuration').value, 10);
-    const dtValue = document.getElementById('manualDatetime').value;
-    const notes = document.getElementById('manualNotes').value.trim();
-
-    if (!subjectId) { showToast(t('timer.selectSubjectToast')); return; }
-    if (!durationMin || durationMin <= 0) { showToast(t('timer.invalidDuration')); return; }
-    if (!dtValue) { showToast(t('timer.selectDateTime')); return; }
-
-    const startTime = new Date(dtValue);
-    const endTime = new Date(startTime.getTime() + durationMin * 60000);
-    const subject = data.subjects.find(s => s.id === subjectId);
-
-    const session = {
-      id: uid(),
-      subjectId,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      durationMin,
-      type: 'manual',
-      notes: notes || null,
-      createdAt: new Date().toISOString()
-    };
-    data.sessions.push(session);
-    applySessionToStats(session);
-    saveData();
-    closeManualModal();
-    renderSubjectProgress();
-    renderSubjectContext();
-    refreshStatsIfVisible();
-    showToast(t('timer.manualAdded', { min: durationMin, name: subject ? subject.name : '' }));
+  initSessionModal({
+    onSaved: () => {
+      renderSubjectProgress();
+      renderSubjectContext();
+      refreshStatsIfVisible();
+    }
   });
 
   document.getElementById('startBtn').addEventListener('click', toggleStartPause);
@@ -667,6 +660,10 @@ export function initTimer() {
   });
 
   document.getElementById('resetBtn').addEventListener('click', resetTimer);
+
+  document.getElementById('cyclePrevBtn')?.addEventListener('click', () => stepCycleTrack(-1));
+  document.getElementById('cycleNextBtn')?.addEventListener('click', () => stepCycleTrack(1));
+  document.getElementById('cycleResetBtn')?.addEventListener('click', resetCycleTrack);
 
   document.getElementById('liveSessionBtn')?.addEventListener('click', () => navigateTo('timer'));
 

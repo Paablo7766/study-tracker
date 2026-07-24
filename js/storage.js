@@ -27,7 +27,17 @@ const DEFAULT_SETTINGS = {
   cyclesBeforeLongBreak: 4,
   autoStartBreak: false,
   dailyGoal: 4,
-  language: 'es'
+  language: 'es',
+  notifyOnFinish: false,
+  notifyOnFocusFinish: true,
+  notifyOnBreakFinish: true,
+  soundEnabled: true,
+  soundVolume: 70,
+  soundSpeed: 100,
+  soundFocus: 'chime-major',
+  soundBreak: 'chime-soft',
+  soundLongBreak: 'bell-temple',
+  soundRepeat: 1
 };
 
 /** Contadores acumulados: O(1) en render; se reconstruyen solo al migrar/importar/borrar. */
