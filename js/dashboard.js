@@ -2,6 +2,7 @@ import { data, ensureStatsFresh } from './storage.js';
 import { startOfWeekMonday, endOfISOWeek, countISOWeeksBetween } from './utils.js';
 import { navigateTo } from './ui.js';
 import { openStreakModal } from './streak-modal.js';
+import { t, getDateLocale, getWeekdayLabelsShort, getWeekdayLabelsFull } from './i18n.js';
 
 let weekOffset = 0;
 let weekChartViewStart = null; // 0 = semana actual; navegable hacia atrás, nunca hacia el futuro
@@ -21,7 +22,7 @@ function getFilteredSessions() {
 
 function getSubjectFilterName() {
   if (!currentSubjectFilter) return null;
-  return data.subjects.find(s => s.id === currentSubjectFilter)?.name || 'Materia';
+  return data.subjects.find(s => s.id === currentSubjectFilter)?.name || t('subject.defaultName');
 }
 
 function toggleSubjectFilter(subjectId) {
@@ -38,7 +39,7 @@ function updateSubjectFilterIndicator() {
   document.getElementById('subjectMixCard')?.classList.toggle('sm-filter-active', !!currentSubjectFilter);
   if (badge) {
     if (currentSubjectFilter && filterName) {
-      badge.textContent = `Filtrado por: ${filterName}`;
+      badge.textContent = t('dash.filteredBy', { name: filterName });
       badge.classList.remove('hidden');
     } else {
       badge.classList.add('hidden');
@@ -67,7 +68,7 @@ function computeWeekDayTotals(weekStart, sessions = data.sessions) {
 
 export function renderDashboard({ animateCharts = false } = {}) {
   const dateEl = document.getElementById('todayDate');
-  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString(getDateLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
 
   const emptyWrap = document.getElementById('dashEmptyWrap');
   const contentWrap = document.getElementById('dashContentWrap');
@@ -102,13 +103,13 @@ export function renderDashboard({ animateCharts = false } = {}) {
   const weekRangeLabel = document.getElementById('weekRangeLabel');
   if (weekRangeLabel) {
     if (weekOffset === 0) {
-      weekRangeLabel.textContent = 'Esta semana';
+      weekRangeLabel.textContent = t('dash.thisWeek');
     } else if (weekOffset === -1) {
-      weekRangeLabel.textContent = 'Semana pasada';
+      weekRangeLabel.textContent = t('dash.lastWeek');
     } else {
       const endLabel = new Date(viewedWeekEnd);
       endLabel.setDate(endLabel.getDate() - 1);
-      weekRangeLabel.textContent = `${viewedWeekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${endLabel.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+      weekRangeLabel.textContent = `${viewedWeekStart.toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' })} – ${endLabel.toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' })}`;
     }
   }
   const weekNextBtn = document.getElementById('weekNextBtn');
@@ -126,7 +127,7 @@ export function renderDashboard({ animateCharts = false } = {}) {
     deltaEl.style.color = 'var(--text-dim)';
   } else {
     const pct = prevWeekMin === 0 ? 100 : Math.round(((totalWeekMin - prevWeekMin) / prevWeekMin) * 100);
-    deltaEl.textContent = (pct >= 0 ? '↑ ' : '↓ ') + Math.abs(pct) + '% vs semana pasada';
+    deltaEl.textContent = t('dash.vsLastWeek', { sign: pct >= 0 ? '↑' : '↓', pct: Math.abs(pct) });
     deltaEl.className = 'stat-delta ' + (pct >= 0 ? 'up' : 'down');
   }
 
@@ -148,7 +149,7 @@ export function renderDashboard({ animateCharts = false } = {}) {
 }
 
 function getWeekChartPayload(filteredSessions, stats) {
-  const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const dayLabels = getWeekdayLabelsShort();
   const now = new Date();
   const currentWeekStart = startOfWeekMonday(now);
   const viewedWeekStart = new Date(currentWeekStart);
@@ -249,15 +250,15 @@ function openDayDetail(weekStart, dayIndex) {
     return r ? `${h}h ${r}m` : `${h}h`;
   };
 
-  document.getElementById('dayDetailTitle').textContent = dayStart.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('dayDetailTitle').textContent = dayStart.toLocaleDateString(getDateLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
   document.getElementById('dayDetailHeroTime').textContent = fmt(totalMin);
   document.getElementById('dayDetailCount').textContent = daySessions.length;
   document.getElementById('dayDetailAvg').textContent = fmt(avgMin);
 
   const rangeEl = document.getElementById('dayDetailRange');
   if (daySessions.length > 0) {
-    const first = new Date(daySessions[0].startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const last = new Date(daySessions[daySessions.length - 1].startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const first = new Date(daySessions[0].startTime).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
+    const last = new Date(daySessions[daySessions.length - 1].startTime).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
     rangeEl.textContent = `${first} – ${last}`;
   } else {
     rangeEl.textContent = '';
@@ -268,19 +269,19 @@ function openDayDetail(weekStart, dayIndex) {
     timelineEl.innerHTML = `
       <div class="day-detail-empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
-        <p>No hay sesiones registradas este día.</p>
+        <p>${t('dash.noSessionsDay')}</p>
       </div>`;
   } else {
     timelineEl.innerHTML = daySessions.map((s, i) => {
       const subj = data.subjects.find(sub => sub.id === s.subjectId);
-      const time = new Date(s.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(s.startTime).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' });
       const color = subj ? subj.color : '#5f5f68';
-      const name = subj ? subj.name : 'Sin materia';
+      const name = subj ? subj.name : t('dash.noSubject');
       return `
         <div class="day-detail-item">
           <span class="dot" style="background:${color}"></span>
           <div class="day-detail-item-info">
-            <p class="day-detail-item-time">${time} · Sesión ${i + 1}</p>
+            <p class="day-detail-item-time">${time} · ${t('dash.sessionN', { n: i + 1 })}</p>
             <p class="day-detail-item-subject">${name}</p>
           </div>
           <span class="day-detail-item-dur">${fmt(s.durationMin)}</span>
@@ -444,7 +445,7 @@ function buildWeekChartHtml(dayTotals, viewedWeekStart, dayLabels, options = {})
     let deltaLabel = '—';
     let deltaClass = '';
     if (prevTotal === 0 && curTotal === 0) {
-      deltaLabel = 'Sin cambio';
+      deltaLabel = t('dash.noChange');
     } else if (prevTotal === 0) {
       deltaLabel = '↑ Nueva actividad';
       deltaClass = 'up';
@@ -563,7 +564,7 @@ function initWeekChartInteractions() {
     if (weekCompareMode && col.dataset.prevMinutes !== undefined) {
       const prevMinutes = parseInt(col.dataset.prevMinutes, 10) || 0;
       if (minutes === 0 && prevMinutes === 0) {
-        return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">Sin actividad en ninguna semana</p>`;
+        return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">${t('dash.noActivityWeek')}</p>`;
       }
       let deltaLine = '';
       if (prevMinutes > 0 || minutes > 0) {
@@ -579,7 +580,7 @@ function initWeekChartInteractions() {
         ${deltaLine}`;
     }
     if (minutes === 0) {
-      return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">Sin actividad</p>`;
+      return `<p class="tooltip-date">${label}</p><p class="tooltip-empty">${t('dash.noActivityShort')}</p>`;
     }
     return `<p class="tooltip-date">${label}</p><p class="tooltip-minutes">${minutes} min · clic para detalle</p>`;
   });
@@ -643,7 +644,7 @@ function computeDiaDorado() {
     if (min > bestDayMin) { bestDayMin = min; bestDayKey = dk; }
   }
 
-  const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  const DAY_NAMES = getWeekdayLabelsFull();
   return {
     dayName: DAY_NAMES[goldenIdx],
     avgHours: (avgMin / 60).toFixed(1) + 'h',
@@ -667,9 +668,9 @@ function openGoldenDayDetail(result) {
 
 function shareDiaDorado(result) {
   if (!result) return;
-  const text = `Mi Día Dorado: ${result.dayName} · ${result.avgHours} de media · ${result.totalSessions} sesiones · Top: ${result.topSubjectName}`;
+  const text = t('dash.shareGoldenText', { day: result.dayName, avg: result.avgHours, sessions: result.totalSessions, top: result.topSubjectName });
   if (navigator.share) {
-    navigator.share({ title: 'Study Tracker — Día Dorado', text }).catch(() => {});
+    navigator.share({ title: t('dash.shareGolden'), text }).catch(() => {});
     return;
   }
   navigator.clipboard?.writeText(text).catch(() => {});
@@ -728,7 +729,7 @@ function computeSubjectMix() {
       const subj = data.subjects.find(item => item.id === id);
       return {
         id,
-        name: subj?.name || 'Sin materia',
+        name: subj?.name || t('dash.noSubject'),
         color: subj?.color || '#5f5f68',
         minutes
       };
@@ -798,7 +799,7 @@ function renderSubjectDonut(svgEl, entries, totalMin) {
       role="button"
       tabindex="0"
       aria-pressed="${isActive}"
-      aria-label="Filtrar por ${entry.name.replace(/"/g, '&quot;')}">
+      aria-label="${t('dash.filterBy', { name: entry.name.replace(/"/g, '&quot;') })}">
       <title>${entry.name}: ${pct}% · ${(entry.minutes / 60).toFixed(1)}h</title>
     </circle>`;
     offset += dash;
@@ -814,7 +815,7 @@ function renderSubjectDonut(svgEl, entries, totalMin) {
 function renderSubjectMixStats(statsEl, entries, totalMin) {
   if (!statsEl) return;
   if (!entries.length || totalMin <= 0) {
-    statsEl.innerHTML = `<div class="sm-legend"><div class="sm-legend-item"><span class="sm-legend-name" style="color:var(--text-faint)">Sin datos</span></div></div>`;
+    statsEl.innerHTML = `<div class="sm-legend"><div class="sm-legend-item"><span class="sm-legend-name" style="color:var(--text-faint)">${t('dash.noData')}</span></div></div>`;
     return;
   }
 
@@ -825,7 +826,7 @@ function renderSubjectMixStats(statsEl, entries, totalMin) {
     const isActive = currentSubjectFilter === entry.id;
     const isDimmed = currentSubjectFilter && !isActive;
     const stateClass = isActive ? ' sm-legend-item--active' : isDimmed ? ' sm-legend-item--dimmed' : '';
-    return `<div class="sm-legend-item${stateClass}" data-subject-id="${entry.id}" role="button" tabindex="0" aria-pressed="${isActive}" aria-label="Filtrar por ${entry.name.replace(/"/g, '&quot;')}">
+    return `<div class="sm-legend-item${stateClass}" data-subject-id="${entry.id}" role="button" tabindex="0" aria-pressed="${isActive}" aria-label="${t('dash.filterBy', { name: entry.name.replace(/"/g, '&quot;') })}">
       <span class="sm-stat-dot" style="background:${color};color:${color}"></span>
       <span class="sm-legend-name">${entry.name}</span>
       <span class="sm-legend-pct">${pct}%</span>
@@ -841,9 +842,9 @@ function shareSubjectMix(result) {
     const pct = Math.round((e.minutes / result.totalMin) * 100);
     return `${e.name} ${pct}%`;
   }).join(' · ');
-  const text = `Mi tiempo de estudio: ${result.totalHours} total · ${lines}`;
+  const text = t('dash.shareMixText', { total: result.totalHours, lines });
   if (navigator.share) {
-    navigator.share({ title: 'Study Tracker — Por Materia', text }).catch(() => {});
+    navigator.share({ title: t('dash.shareMix'), text }).catch(() => {});
     return;
   }
   navigator.clipboard?.writeText(text).catch(() => {});
@@ -946,9 +947,9 @@ function computePeakHours() {
   const evening   = hourly.slice(18, 24).reduce((a, b) => a + b, 0);
   const night     = hourly.slice(0, 5).reduce((a, b) => a + b, 0);
   const buckets = [
-    { label: 'Madrugador',          value: morning },
-    { label: 'Estudiante de Tarde', value: afternoon },
-    { label: 'Nocturno',            value: evening + night }
+    { label: t('dash.morning'),          value: morning },
+    { label: t('dash.afternoon'), value: afternoon },
+    { label: t('dash.night'),            value: evening + night }
   ];
   const preference = buckets.sort((a, b) => b.value - a.value)[0].label;
   return { ...stats, preference };
@@ -988,18 +989,18 @@ function renderPeakHours({ animate = false } = {}) {
     hourly = result.hourly;
     peakHour = result.peakHour;
     peakMin = result.peakMin;
-    if (subtitleEl) subtitleEl.textContent = 'Sesiones de hoy';
-    if (badgeEl) badgeEl.textContent = result.sessionCount > 0 ? `Hoy · ${result.sessionCount} ses.` : 'Sin sesiones hoy';
-    if (footLeftEl) footLeftEl.innerHTML = `Total hoy: <strong>${result.totalMin} min</strong>`;
+    if (subtitleEl) subtitleEl.textContent = t('dash.peakTodaySessions');
+    if (badgeEl) badgeEl.textContent = result.sessionCount > 0 ? t('dash.todaySessions', { count: result.sessionCount }) : t('dash.noSessionsToday');
+    if (footLeftEl) footLeftEl.innerHTML = t('dash.todayTotal', { min: result.totalMin });
     if (detailEl) detailEl.textContent = peakMin > 0 ? `${peakMin} min a las ${padH(peakHour)}:00` : '—';
   } else {
     const result = computePeakHours();
     hourly = result.hourly;
     peakHour = result.peakHour;
     peakMin = result.peakMin;
-    if (subtitleEl) subtitleEl.textContent = 'Distribución histórica';
-    if (badgeEl) badgeEl.textContent = peakMin > 0 ? `Hora Punta: ${result.peakLabel}` : 'Sin datos';
-    if (footLeftEl) footLeftEl.innerHTML = `Preferencia: <strong>${result.preference}</strong>`;
+    if (subtitleEl) subtitleEl.textContent = t('dash.peakHistoricDist');
+    if (badgeEl) badgeEl.textContent = peakMin > 0 ? t('dash.peakTime', { label: result.peakLabel }) : t('dash.noData');
+    if (footLeftEl) footLeftEl.innerHTML = t('dash.preferenceLabel', { pref: result.preference });
     if (detailEl) detailEl.textContent = peakMin > 0 ? `${peakMin} min a las ${padH(peakHour)}:00` : '—';
   }
 
@@ -1146,13 +1147,13 @@ function findTodayWeekIndex(cellsByCol, todayKey) {
 }
 
 function formatCellAria(cell, todayKey) {
-  const dateFormatted = cell.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateFormatted = cell.date.toLocaleDateString(getDateLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
   if (cell.key === todayKey) {
-    if (cell.sessionCount === 0 || cell.minutes === 0) return `Hoy, ${dateFormatted}: sin actividad`;
-    return `Hoy, ${dateFormatted}: ${cell.minutes} minutos, ${cell.sessionCount} pomodoro${cell.sessionCount === 1 ? '' : 's'}`;
+    if (cell.sessionCount === 0 || cell.minutes === 0) return t('dash.todayTooltipEmpty', { date: dateFormatted });
+    return t('dash.todayTooltip', { date: dateFormatted, minutes: cell.minutes, count: cell.sessionCount, s: cell.sessionCount === 1 ? '' : 's' });
   }
-  if (cell.sessionCount === 0 || cell.minutes === 0) return `${dateFormatted}: sin actividad`;
-  return `${dateFormatted}: ${cell.minutes} minutos, ${cell.sessionCount} pomodoro${cell.sessionCount === 1 ? '' : 's'}`;
+  if (cell.sessionCount === 0 || cell.minutes === 0) return `${dateFormatted}: ${t('dash.noActivity')}`;
+  return `${dateFormatted}: ${cell.minutes} min, ${cell.sessionCount} pomodoro${cell.sessionCount === 1 ? '' : 's'}`;
 }
 
 function renderHeatmap() {
@@ -1173,10 +1174,10 @@ function renderHeatmap() {
 
   if (!data.sessions || data.sessions.length === 0) {
     if (contentEl) {
-      contentEl.innerHTML = '<div class="chart-empty-msg">Completa tu primer pomodoro para empezar a ver tu constancia aquí</div>';
+      contentEl.innerHTML = `<div class="chart-empty-msg">${t('dash.heatmapEmpty')}</div>`;
     }
     wrapper?.classList.add('heatmap-empty');
-    if (pillEl) pillEl.textContent = 'Sin datos';
+    if (pillEl) pillEl.textContent = t('dash.noData');
     if (prevBtn) prevBtn.disabled = true;
     if (nextBtn) nextBtn.disabled = true;
     heatmapLastPage = -1;
@@ -1274,7 +1275,7 @@ function renderHeatmap() {
   heatmapLastPage = heatmapPage;
 
   function paintHeatmap() {
-    const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const dayNames = getWeekdayLabelsShort();
     dayLabelsEl.innerHTML = dayNames.map(d => `<span>${d}</span>`).join('');
 
     monthsEl.innerHTML = monthLabels.map(m => {
@@ -1363,13 +1364,13 @@ function initHeatmapInteractions() {
     const sessions = parseInt(cell.dataset.sessions, 10) || 0;
     const [y, m, d] = dateStr.split('-');
     const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    const dateFormatted = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const dateFormatted = date.toLocaleDateString(getDateLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
 
     const isToday = cell.classList.contains('cell-today');
-    const prefix = isToday ? 'Hoy · ' : '';
+    const prefix = isToday ? t('dash.todayPrefix') : '';
 
     if (sessions === 0 || minutes === 0) {
-      tooltip.innerHTML = `<p class="tooltip-date">${prefix}${dateFormatted}</p><p class="tooltip-empty">Sin actividad este día</p>`;
+      tooltip.innerHTML = `<p class="tooltip-date">${prefix}${dateFormatted}</p><p class="tooltip-empty">${t('dash.noActivity')}</p>`;
     } else {
       const label = sessions === 1 ? 'pomodoro' : 'pomodoros';
       tooltip.innerHTML = `<p class="tooltip-date">${prefix}${dateFormatted}</p><p class="tooltip-minutes">${minutes} min · ${sessions} ${label}</p>`;

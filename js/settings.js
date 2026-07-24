@@ -1,6 +1,7 @@
 import { data, saveData } from './storage.js';
 import { showToast } from './ui.js';
 import { resetTimerFromSettings } from './timer.js';
+import { applyLanguage, t } from './i18n.js';
 
 export function loadSettingsForm() {
   document.getElementById('focusMinInput').value = data.settings.focusMin;
@@ -10,9 +11,17 @@ export function loadSettingsForm() {
   document.getElementById('dailyGoalInput').value = data.settings.dailyGoal || 4;
   document.getElementById('autoStartBreakInput').checked = !!data.settings.autoStartBreak;
   document.getElementById('notifyOnFinishInput').checked = !!data.settings.notifyOnFinish;
+  const langSelect = document.getElementById('languageSelect');
+  if (langSelect) langSelect.value = data.settings.language === 'en' ? 'en' : 'es';
 }
 
 export function initSettings() {
+  document.getElementById('languageSelect')?.addEventListener('change', (e) => {
+    data.settings.language = e.target.value === 'en' ? 'en' : 'es';
+    applyLanguage(data.settings.language);
+    saveData();
+  });
+
   document.getElementById('saveSettingsBtn').addEventListener('click', () => {
     data.settings.focusMin = Number(document.getElementById('focusMinInput').value) || 25;
     data.settings.breakMin = Number(document.getElementById('breakMinInput').value) || 5;
@@ -21,14 +30,14 @@ export function initSettings() {
     data.settings.dailyGoal = Number(document.getElementById('dailyGoalInput').value) || 4;
     data.settings.autoStartBreak = document.getElementById('autoStartBreakInput').checked;
     data.settings.notifyOnFinish = document.getElementById('notifyOnFinishInput').checked;
+    data.settings.language = document.getElementById('languageSelect')?.value === 'en' ? 'en' : 'es';
+    applyLanguage(data.settings.language);
     saveData();
 
-    // El timer lee data.settings y actualiza su estado interno vía API pública
     resetTimerFromSettings();
-    showToast('Ajustes guardados');
+    showToast(t('settings.saved'));
   });
 
-  // Permiso de notificaciones solo al activar el toggle (nunca al cargar).
   document.getElementById('notifyOnFinishInput').addEventListener('change', (e) => {
     if (e.target.checked && 'Notification' in window) {
       if (Notification.permission === 'granted') return;

@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 export function showToast(message) {
   const toast = document.getElementById('toast');
   toast.innerHTML = `<span class="toast-check"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>${message}`;
@@ -10,7 +12,7 @@ export function showToast(message) {
   }, 3000);
 }
 
-const views = ['timer', 'dashboard', 'materias', 'ajustes'];
+const views = ['timer', 'dashboard', 'materias', 'tareas', 'ajustes'];
 const MOBILE_NAV_MQ = window.matchMedia('(max-width: 780px)');
 const NAV_TRANSITION_MS = 420;
 
@@ -155,7 +157,7 @@ export function initSidebar() {
   function applyNavCollapsedState() {
     const collapsed = localStorage.getItem('navCollapsed') === '1';
     navEl.classList.toggle('collapsed', collapsed);
-    navToggleBtn?.setAttribute('aria-label', collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral');
+    navToggleBtn?.setAttribute('aria-label', collapsed ? t('nav.expandMenu') : t('nav.collapseMenu'));
     updateNavPill();
   }
 
@@ -163,7 +165,7 @@ export function initSidebar() {
     startNavTransition();
     const collapsed = navEl.classList.toggle('collapsed');
     localStorage.setItem('navCollapsed', collapsed ? '1' : '0');
-    navToggleBtn.setAttribute('aria-label', collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral');
+    navToggleBtn.setAttribute('aria-label', collapsed ? t('nav.expandMenu') : t('nav.collapseMenu'));
   });
 
   window.addEventListener('resize', updateNavPill);

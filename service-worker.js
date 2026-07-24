@@ -1,4 +1,4 @@
-const CACHE_NAME = 'study-tracker-v9';
+const CACHE_NAME = 'study-tracker-v10';
 
 const urlsToCache = [
   './index.html',
@@ -12,6 +12,7 @@ const urlsToCache = [
   './js/supabase.js',
   './js/utils.js',
   './js/ui.js',
+  './js/i18n.js',
   './js/storage.js',
   './js/dashboard.js',
   './js/subjects.js',
@@ -19,6 +20,7 @@ const urlsToCache = [
   './js/timer.js',
   './js/settings.js',
   './js/streak-modal.js',
+  './js/tasks.js',
   './assets/icon.png',
   './assets/icon-32.png',
   './assets/icon-180.png',
@@ -96,6 +98,12 @@ self.addEventListener('fetch', (event) => {
     request.mode === 'navigate' ||
     (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'))
   ) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Credenciales de Supabase: siempre red primero para no quedar con placeholders en caché.
+  if (url.pathname.endsWith('/js/config.js')) {
     event.respondWith(networkFirst(request));
     return;
   }

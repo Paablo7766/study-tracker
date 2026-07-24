@@ -44,6 +44,10 @@
           <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
           <span class="nav-label">Materias</span>
         </button>
+        <button type="button" data-view="tareas" class="nav-item">
+          <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span>
+          <span class="nav-label">Tareas</span>
+        </button>
         <button type="button" data-view="ajustes" class="nav-item">
           <span class="nav-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <span class="nav-label">Ajustes</span>
@@ -438,6 +442,42 @@
       <div id="subjectList" class="subjects-grid"></div>
     </section>
 
+    <section id="view-tareas" class="hidden">
+      <div class="tasks-wrap">
+
+        <div class="dash-header">
+          <div>
+            <h2 style="margin:0;letter-spacing:-0.4px">Brain Dump</h2>
+            <p class="tasks-subtitle">Vacía tu mente. Organiza después.</p>
+          </div>
+          <div class="tasks-search-wrap">
+            <svg class="tasks-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="tasksSearch" placeholder="Buscar…" class="tasks-search-input" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="tasks-quick-add-wrap">
+          <div class="tasks-quick-add-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            id="tasksQuickAdd"
+            placeholder="Nueva tarea o idea… → Enter para guardar"
+            class="tasks-quick-add-input"
+            autocomplete="off"
+          >
+        </div>
+
+        <div id="tasksBoard" class="tasks-board"></div>
+
+      </div>
+    </section>
+
     <section id="view-ajustes" class="hidden">
       <div class="settings-shell">
         <div class="dash-header settings-header">
@@ -504,9 +544,27 @@
             <div class="settings-section">
               <div class="settings-section-head">
                 <span class="settings-section-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </span>
+                <p class="settings-section-title" id="languageSectionTitle">Idioma</p>
+              </div>
+              <div class="card settings-card">
+                <div class="field">
+                  <label for="languageSelect">Idioma de la app</label>
+                  <select id="languageSelect" class="settings-select">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-section-head">
+                <span class="settings-section-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                 </span>
-                <p class="settings-section-title">Sesiones y datos</p>
+                <p class="settings-section-title" id="dataSectionTitle">Sesiones y datos</p>
               </div>
               <div class="card settings-card settings-card--combined">
                 <div class="settings-combined-stack">
@@ -804,6 +862,13 @@
       navigator.serviceWorker.register('./service-worker.js').catch((err) => {
         console.warn('Service Worker no registrado:', err);
       });
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
     });
   }
 </script>

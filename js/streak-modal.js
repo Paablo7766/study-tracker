@@ -1,5 +1,6 @@
 import { data, ensureStatsFresh } from './storage.js';
 import { startOfWeekMonday } from './utils.js';
+import { t, getStreakWeekdayLabels } from './i18n.js';
 
 const FLAME_SVG = `<svg viewBox="0 0 24 24" class="streak-flame-svg" fill="url(#streakFireGrad)" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
@@ -13,8 +14,6 @@ const FLAME_SVG = `<svg viewBox="0 0 24 24" class="streak-flame-svg" fill="url(#
 </svg>`;
 
 const CHECK_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
-
-const WEEKDAY_FULL = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 let sparksFrameId = null;
 let sparks = [];
@@ -104,7 +103,7 @@ function buildWeekGrid(daySet, streakDayKeys, now = new Date()) {
 
   return `
     <div class="streak-week-calendar">
-      <div class="streak-week-labels">${WEEKDAY_FULL.map(l => `<span>${l}</span>`).join('')}</div>
+      <div class="streak-week-labels">${getStreakWeekdayLabels().map(l => `<span>${l}</span>`).join('')}</div>
       <div class="streak-week-cells-wrap">
         ${connectorHtml}
         <div class="streak-week-cells">${cells.join('')}</div>
@@ -121,17 +120,17 @@ function renderModalContent({ mode = 'default' } = {}) {
   const best = data.stats.bestStreak;
   const streakDayKeys = new Set(streakDays.map(dayKey));
 
-  const heading = mode === 'celebrate' ? 'Nueva racha' : 'Racha';
+  const heading = mode === 'celebrate' ? t('streak.newStreak') : t('streak.title');
 
   document.getElementById('streakDetailHeading').textContent = heading;
   document.getElementById('streakDetailNumber').textContent = streak;
   document.getElementById('streakWeekWrap').innerHTML = buildWeekGrid(daySet, streakDayKeys, now);
 
   const tip = streak === 0
-    ? 'Completa tu primera sesión de hoy para encender la llama de tu racha.'
+    ? t('streak.tipEmpty')
     : streak >= best && streak > 1
-      ? `¡Récord personal! Llevas ${streak} días seguidos. Sigue así para superarte.`
-      : `Tu disciplina está creciendo. Cada sesión completada es un paso más cerca de tus metas de estudio.${best > streak ? ` Tu récord: ${best} días.` : ''}`;
+      ? t('streak.tipRecord', { days: streak })
+      : t('streak.tipGrowing') + (best > streak ? t('streak.tipBest', { days: best }) : '');
 
   document.getElementById('streakTipText').textContent = tip;
 

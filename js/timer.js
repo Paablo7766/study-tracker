@@ -3,6 +3,7 @@ import { uid, toLocalDatetimeInputValue, startOfWeekMonday } from './utils.js';
 import { showToast, navigateTo } from './ui.js';
 import { refreshStatsIfVisible, showStreakCelebration } from './dashboard.js';
 import { getSubjectGoalProgress } from './subjectGoals.js';
+import { t } from './i18n.js';
 
 const ORIGINAL_TITLE = document.title;
 const CIRCUM = 2 * Math.PI * 54;
@@ -34,9 +35,33 @@ function formatTime(s) {
 function formatHoursMinutes(totalMin) {
   const h = Math.floor(totalMin / 60);
   const m = Math.round(totalMin % 60);
-  if (h <= 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${m} min`;
+  if (h <= 0) return t('timer.minutesOnly', { m });
+  if (m === 0) return t('timer.hoursOnly', { h });
+  return t('timer.hoursMinutes', { h, m });
+}
+
+export function refreshTimerLabels() {
+  const startBtn = document.getElementById('startBtn');
+  const nextModeRow = document.getElementById('nextModeRow');
+  const mainBtnRow = document.getElementById('mainBtnRow');
+
+  if (startBtn && mainBtnRow && !mainBtnRow.classList.contains('hidden')) {
+    if (isRunning) startBtn.textContent = t('timer.pause');
+    else if (isPaused) startBtn.textContent = t('timer.resume');
+    else startBtn.textContent = t('timer.start');
+  }
+
+  if (nextModeRow && !nextModeRow.classList.contains('hidden')) {
+    const startNextBtn = document.getElementById('startNextBtn');
+    const continueBtn = document.getElementById('continueFocusBtn');
+    if (pendingNextMode === 'break' || pendingNextMode === 'longBreak') {
+      if (startNextBtn) startNextBtn.textContent = t('timer.takeBreak');
+      continueBtn?.classList.remove('hidden');
+    } else if (pendingNextMode === 'focus') {
+      if (startNextBtn) startNextBtn.textContent = t('timer.keepStudying');
+      continueBtn?.classList.add('hidden');
+    }
+  }
 }
 
 export function updateTimerDisplay() {
@@ -46,11 +71,11 @@ export function updateTimerDisplay() {
   const circle = document.getElementById('timerCircleWrap');
 
   if (isPaused && !isRunning) {
-    modeEl.textContent = 'Pausado';
+    modeEl.textContent = t('timer.paused');
     circle.classList.add('paused');
   } else {
     circle.classList.remove('paused');
-    modeEl.textContent = mode === 'focus' ? 'Enfoque' : mode === 'break' ? 'Descanso' : 'Descanso largo';
+    modeEl.textContent = mode === 'focus' ? t('timer.focus') : mode === 'break' ? t('timer.break') : t('timer.longBreak');
   }
 
   const totalForMode = mode === 'focus'
@@ -74,6 +99,7 @@ export function updateTimerDisplay() {
   }
 
   updateLiveSessionUI();
+  refreshTimerLabels();
 }
 
 function getModeTotalSeconds() {
@@ -141,15 +167,15 @@ export function updateLiveSessionUI() {
 
   if (fill) fill.style.width = `${progress}%`;
   if (timeEl) timeEl.textContent = formatTime(secondsLeft);
-  if (eyebrowEl) eyebrowEl.textContent = isPaused && !isRunning ? 'Pausado' : 'En vivo';
+  if (eyebrowEl) eyebrowEl.textContent = isPaused && !isRunning ? t('live.paused') : t('live.live');
 
   const modeLabel = isPaused && !isRunning
-    ? 'Sesión en pausa'
+    ? t('timer.sessionPaused')
     : mode === 'focus'
-      ? 'Enfoque'
+      ? t('timer.focus')
       : mode === 'break'
-        ? 'Descanso'
-        : 'Descanso largo';
+        ? t('timer.break')
+        : t('timer.longBreak');
 
   let subjectName = '';
   if (mode === 'focus') {
@@ -183,8 +209,8 @@ function tick() {
 function notifyModeFinished(finishedMode) {
   if (!data.settings.notifyOnFinish) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const label = finishedMode === 'focus' ? 'Pomodoro terminado' : 'Descanso terminado';
-  const body = finishedMode === 'focus' ? 'Es hora de un descanso.' : 'Es hora de volver al enfoque.';
+  const label = finishedMode === 'focus' ? t('timer.notifyFocusTitle') : t('timer.notifyBreakTitle');
+  const body = finishedMode === 'focus' ? t('timer.notifyFocusBody') : t('timer.notifyBreakBody');
   new Notification(label, { body, icon: '' });
 }
 
@@ -193,10 +219,10 @@ function showNextModeChoices(finishedMode) {
   const startNextBtn = document.getElementById('startNextBtn');
 
   if (finishedMode === 'focus') {
-    startNextBtn.textContent = 'Descansar';
+    startNextBtn.textContent = t('timer.takeBreak');
     continueBtn.classList.remove('hidden');
   } else {
-    startNextBtn.textContent = 'Seguir estudiando';
+    startNextBtn.textContent = t('timer.keepStudying');
     continueBtn.classList.add('hidden');
   }
 
@@ -267,7 +293,7 @@ function endFlowReadyForFocus() {
   sessionStart = null;
   mode = 'focus';
   secondsLeft = data.settings.focusMin * 60;
-  document.getElementById('startBtn').textContent = 'Iniciar';
+  document.getElementById('startBtn').textContent = t('timer.start');
   document.getElementById('timerCircleWrap').classList.remove('running', 'paused');
   document.getElementById('mainBtnRow').classList.remove('hidden');
   document.getElementById('nextModeRow').classList.add('hidden');
@@ -352,7 +378,7 @@ export function renderSubjectContext() {
   el.classList.remove('hidden');
   if (!progress.hasGoal) {
     const totalMin = data.stats.bySubjectMinutes[subjectId] || 0;
-    el.innerHTML = `<span class="dot" style="background:${subject.color}"></span>${subject.name} · ${formatHoursMinutes(totalMin)} registradas`;
+    el.innerHTML = `<span class="dot" style="background:${subject.color}"></span>${subject.name} · ${formatHoursMinutes(totalMin)} ${t('timer.registered')}`;
     return;
   }
   el.innerHTML = `<span class="dot" style="background:${subject.color}"></span>${subject.name} · ${progress.label}`;
@@ -374,12 +400,12 @@ export function renderSubjectProgress() {
 
   if (goalMet) {
     labelEl.textContent = todayCount > target
-      ? `Objetivo diario superado · ${todayCount}/${target}`
-      : `Objetivo diario cumplido · ${todayCount}/${target}`;
+      ? t('timer.goalExceeded', { current: todayCount, target })
+      : t('timer.goalMet', { current: todayCount, target });
   } else {
     labelEl.textContent = remaining === 1
-      ? 'Te falta 1 bloque para el objetivo diario'
-      : `Te faltan ${remaining} bloques para el objetivo diario`;
+      ? t('timer.blocksRemainingOne')
+      : t('timer.blocksRemaining', { count: remaining });
   }
   pctEl.textContent = `${rawPct}%`;
   fillEl.style.width = barPct + '%';
@@ -469,7 +495,7 @@ export function resetTimerFromSettings() {
   cyclesCompleted = 0;
   focusSecondsAtStart = secondsLeft;
 
-  document.getElementById('startBtn').textContent = 'Iniciar';
+  document.getElementById('startBtn').textContent = t('timer.start');
   document.getElementById('timerCircleWrap').classList.remove('running', 'paused');
   document.getElementById('mainBtnRow').classList.remove('hidden');
   document.getElementById('nextModeRow').classList.add('hidden');
@@ -511,7 +537,7 @@ function adjustClock(deltaSeconds) {
 function startTicking() {
   isRunning = true;
   isPaused = false;
-  document.getElementById('startBtn').textContent = 'Pausar';
+  document.getElementById('startBtn').textContent = t('timer.pause');
   document.getElementById('timerCircleWrap').classList.add('running');
   document.getElementById('timerCircleWrap').classList.remove('paused');
   if (mode === 'focus' && !sessionStart) {
@@ -529,14 +555,14 @@ function toggleStartPause() {
     if (mode === 'focus' && !sessionStart && !subjectSelect.value) {
       document.getElementById('subjectSelectBtn').classList.add('select-warning');
       setTimeout(() => document.getElementById('subjectSelectBtn').classList.remove('select-warning'), 1200);
-      showToast('Selecciona una materia antes de empezar');
+      showToast(t('timer.selectSubjectFirst'));
       return;
     }
     startTicking();
   } else {
     isRunning = false;
     isPaused = true;
-    document.getElementById('startBtn').textContent = 'Reanudar';
+    document.getElementById('startBtn').textContent = t('timer.resume');
     document.getElementById('timerCircleWrap').classList.remove('running');
     document.getElementById('timerCircleWrap').classList.add('paused');
     clearInterval(intervalId);
@@ -555,7 +581,7 @@ function resetTimer() {
   sessionStart = null;
   modeEndTimestamp = null;
   pendingNextMode = null;
-  document.getElementById('startBtn').textContent = 'Iniciar';
+  document.getElementById('startBtn').textContent = t('timer.start');
   document.getElementById('timerCircleWrap').classList.remove('running', 'paused');
   document.getElementById('mainBtnRow').classList.remove('hidden');
   document.getElementById('nextModeRow').classList.add('hidden');
@@ -590,9 +616,9 @@ export function initTimer() {
     const dtValue = document.getElementById('manualDatetime').value;
     const notes = document.getElementById('manualNotes').value.trim();
 
-    if (!subjectId) { showToast('Selecciona una materia'); return; }
-    if (!durationMin || durationMin <= 0) { showToast('Duración inválida'); return; }
-    if (!dtValue) { showToast('Selecciona fecha y hora'); return; }
+    if (!subjectId) { showToast(t('timer.selectSubjectToast')); return; }
+    if (!durationMin || durationMin <= 0) { showToast(t('timer.invalidDuration')); return; }
+    if (!dtValue) { showToast(t('timer.selectDateTime')); return; }
 
     const startTime = new Date(dtValue);
     const endTime = new Date(startTime.getTime() + durationMin * 60000);
@@ -615,7 +641,7 @@ export function initTimer() {
     renderSubjectProgress();
     renderSubjectContext();
     refreshStatsIfVisible();
-    showToast(`Pomodoro añadido: ${durationMin} min · ${subject ? subject.name : ''}`);
+    showToast(t('timer.manualAdded', { min: durationMin, name: subject ? subject.name : '' }));
   });
 
   document.getElementById('startBtn').addEventListener('click', toggleStartPause);

@@ -4,6 +4,7 @@ import { showToast } from './ui.js';
 import { refreshStatsIfVisible } from './dashboard.js';
 import { renderSubjectContext } from './timer.js';
 import { getSubjectGoal, getSubjectGoalProgress, isSubjectGoalComplete, adjustSubjectCompletedUnits } from './subjectGoals.js';
+import { t, getDateLocale } from './i18n.js';
 
 let editingSubjectId = null;
 let selectedSubjectColor = COLORS[0];
@@ -15,7 +16,7 @@ export function renderSubjectSelects() {
   if (!sel) return;
   const currentVal = sel.value;
   const activeSubjects = data.subjects.filter(s => !s.archived);
-  sel.innerHTML = `<option value="">Selecciona una materia</option>` +
+  sel.innerHTML = `<option value="">${t('timer.selectSubject')}</option>` +
     activeSubjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   sel.value = activeSubjects.some(s => s.id === currentVal) ? currentVal : '';
   renderSubjectDropdownPanel();
@@ -31,7 +32,7 @@ function renderSubjectDropdownPanel() {
   const noneIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h6"/></svg>`;
   const noneOption = `<div class="subject-select-option${currentVal === '' ? ' selected' : ''}" data-value="">
     <span class="subject-select-option-icon">${noneIcon}</span>
-    <span class="subject-select-option-label">Selecciona una materia</span>
+    <span class="subject-select-option-label">${t('timer.selectSubject')}</span>
   </div>`;
   const subjectOptions = data.subjects.filter(s => !s.archived).map(s => {
     const bookIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
@@ -49,7 +50,7 @@ function updateSubjectDropdownLabel() {
   const btn = document.getElementById('subjectSelectBtn');
   if (!sel || !label || !btn) return;
   const subject = data.subjects.find(s => s.id === sel.value);
-  label.textContent = subject ? subject.name : 'Selecciona una materia';
+  label.textContent = subject ? subject.name : t('timer.selectSubject');
   if (subject) {
     btn.style.setProperty('--subject-color', subject.color || COLORS[0]);
     btn.classList.add('has-subject');
@@ -70,12 +71,12 @@ function buildUnitsActionButtons(s) {
 
   const current = goal.completedUnits || 0;
   const target = Math.max(1, goal.targetUnits || 1);
-  const unitSingular = (goal.unitLabel || 'módulos').replace(/s$/, '') || 'módulo';
+  const unitSingular = (goal.unitLabel || t('subjects.unitsDefault')).replace(/s$/, '') || t('subjects.unitsDefault').replace(/s$/, '');
   const atMin = current <= 0;
   const atMax = current >= target;
 
-  return `<button type="button" class="icon-btn"${atMin ? ' disabled' : ''} title="Bajar ${unitSingular}" aria-label="Quitar un ${unitSingular}" data-action="unit-minus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
-      <button type="button" class="icon-btn"${atMax ? ' disabled' : ''} title="Subir ${unitSingular}" aria-label="Completar un ${unitSingular}" data-action="unit-plus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>`;
+  return `<button type="button" class="icon-btn"${atMin ? ' disabled' : ''} title="${t('subjects.unitDown', { unit: unitSingular })}" aria-label="${t('subjects.unitRemove', { unit: unitSingular })}" data-action="unit-minus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="icon-btn"${atMax ? ' disabled' : ''} title="${t('subjects.unitUp', { unit: unitSingular })}" aria-label="${t('subjects.unitComplete', { unit: unitSingular })}" data-action="unit-plus" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>`;
 }
 
 function buildSubjectCard(s, weekStart) {
@@ -85,14 +86,14 @@ function buildSubjectCard(s, weekStart) {
   const totalMin = subjSessions.reduce((a, b) => a + b.durationMin, 0);
   const sessionCount = subjSessions.length;
   const lastSession = subjSessions.slice().sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0];
-  const lastStr = lastSession ? new Date(lastSession.startTime).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—';
+  const lastStr = lastSession ? new Date(lastSession.startTime).toLocaleDateString(getDateLocale(), { day: '2-digit', month: 'short' }) : '—';
   const totalHours = (totalMin / 60).toFixed(1);
   const progress = getSubjectGoalProgress(s, data.sessions, weekStart);
 
   const archiveIcon = s.archived
     ? '<path d="M3 7v13h18V7"/><path d="M1 3h22v4H1z"/><path d="M10 12h4"/>'
     : '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>';
-  const archiveTitle = s.archived ? 'Restaurar' : 'Archivar';
+  const archiveTitle = s.archived ? t('subjects.restore') : t('subjects.archive');
   const archiveAction = s.archived ? 'unarchive' : 'archive';
 
   const progressHtml = progress.hasGoal
@@ -114,16 +115,16 @@ function buildSubjectCard(s, weekStart) {
       </div>
     </div>
     <div class="meta-row">
-      <span>${sessionCount} sesiones</span>
-      <span>Última: ${lastStr}</span>
+      <span>${sessionCount} ${t('subjects.sessions')}</span>
+      <span>${t('subjects.lastSession')}: ${lastStr}</span>
     </div>
     ${progressHtml}
     <div class="card-actions">
       ${buildUnitsActionButtons(s)}
       <div class="card-actions-admin">
         <button type="button" class="icon-btn" title="${archiveTitle}" aria-label="${archiveTitle} ${safeName}" data-action="${archiveAction}" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${archiveIcon}</svg></button>
-        ${s.archived ? '' : `<button type="button" class="icon-btn" title="Editar" aria-label="Editar ${safeName}" data-action="edit" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>`}
-        <button type="button" class="icon-btn danger" title="Eliminar" aria-label="Eliminar ${safeName}" data-action="delete" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+        ${s.archived ? '' : `<button type="button" class="icon-btn" title="${t('subjects.edit')}" aria-label="${t('subjects.edit')} ${safeName}" data-action="edit" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>`}
+        <button type="button" class="icon-btn danger" title="${t('subjects.delete')}" aria-label="${t('subjects.delete')} ${safeName}" data-action="delete" data-id="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
       </div>
     </div>
   </div>`;
@@ -168,14 +169,14 @@ export function renderMaterias() {
   const addCardHtml = materiasTab === 'activas'
     ? `<div class="add-subject-card" data-action="add-subject" role="button" tabindex="0">
         <div class="plus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
-        <span>Nueva materia</span>
+        <span>${t('subjects.addCard')}</span>
       </div>`
     : '';
 
   const tabEmptyMessages = {
-    activas: 'Todas tus materias activas han completado su objetivo. Revisa la pestaña Completadas.',
-    completadas: 'Ninguna materia ha completado su objetivo todavía.',
-    archivadas: 'No hay materias archivadas.'
+    activas: t('subjects.tabEmptyActive'),
+    completadas: t('subjects.tabEmptyCompleted'),
+    archivadas: t('subjects.tabEmptyArchived')
   };
 
   if (filtered.length === 0 && !addCardHtml) {
@@ -204,11 +205,13 @@ function renderColorPicker() {
   ).join('');
 }
 
-const GOAL_HINTS = {
-  time: 'Establece cuántos minutos quieres dedicar en el periodo elegido.',
-  units: '',
-  none: 'Solo registrarás horas y sesiones, sin barra de progreso.'
-};
+function getGoalHints() {
+  return {
+    time: t('subjects.goalHintTime'),
+    units: t('subjects.goalHintUnits'),
+    none: t('subjects.goalHintNone')
+  };
+}
 
 function updateGoalTypePills() {
   const type = document.getElementById('subjectGoalTypeSelect')?.value || 'time';
@@ -216,6 +219,7 @@ function updateGoalTypePills() {
     btn.classList.toggle('active', btn.dataset.goalType === type);
   });
   const hint = document.getElementById('subjectGoalHint');
+  const GOAL_HINTS = getGoalHints();
   if (!hint) return;
   const text = GOAL_HINTS[type] || '';
   hint.textContent = text;
@@ -258,7 +262,7 @@ function readGoalFromForm() {
       type: 'units',
       targetUnits: Math.max(1, Number(document.getElementById('subjectUnitsTargetInput').value) || 1),
       completedUnits: Math.max(0, Number(document.getElementById('subjectUnitsCompletedInput').value) || 0),
-      unitLabel: document.getElementById('subjectUnitsLabelInput').value.trim() || 'módulos'
+      unitLabel: document.getElementById('subjectUnitsLabelInput').value.trim() || t('subjects.unitsDefault')
     };
   }
   return {
@@ -287,7 +291,7 @@ function populateGoalForm(subject) {
     const labelInput = document.getElementById('subjectUnitsLabelInput');
     if (targetInput) targetInput.value = goal.targetUnits || 15;
     if (completedInput) completedInput.value = goal.completedUnits || 0;
-    if (labelInput) labelInput.value = goal.unitLabel || 'módulos';
+    if (labelInput) labelInput.value = goal.unitLabel || t('subjects.unitsDefault');
   } else {
     const periodSelect = document.getElementById('subjectGoalPeriodSelect');
     const targetInput = document.getElementById('subjectTargetInput');
@@ -298,7 +302,7 @@ function populateGoalForm(subject) {
     if (targetInput) targetInput.value = 300;
     if (unitsTargetInput) unitsTargetInput.value = 15;
     if (completedInput) completedInput.value = 0;
-    if (labelInput) labelInput.value = 'módulos';
+    if (labelInput) labelInput.value = t('subjects.unitsDefault');
   }
   updateGoalFieldsVisibility();
   updatePeriodPills();
@@ -315,14 +319,14 @@ function showSubjectModal() {
 
 function openAddSubjectModal() {
   editingSubjectId = null;
-  document.getElementById('subjectModalTitle').textContent = 'Nueva materia';
+  document.getElementById('subjectModalTitle').textContent = t('subjects.newSubject');
   document.getElementById('subjectNameInput').value = '';
   document.getElementById('subjectGoalTypeSelect').value = 'time';
   document.getElementById('subjectGoalPeriodSelect').value = 'week';
   document.getElementById('subjectTargetInput').value = 300;
   document.getElementById('subjectUnitsTargetInput').value = 15;
   document.getElementById('subjectUnitsCompletedInput').value = 0;
-  document.getElementById('subjectUnitsLabelInput').value = 'módulos';
+  document.getElementById('subjectUnitsLabelInput').value = t('subjects.unitsDefault');
   updateGoalFieldsVisibility();
   updatePeriodPills();
   selectedSubjectColor = COLORS[data.subjects.length % COLORS.length];
@@ -340,7 +344,7 @@ function openEditSubjectModal(id) {
   const nameInput = document.getElementById('subjectNameInput');
   if (!titleEl || !nameInput) return;
 
-  titleEl.textContent = 'Editar materia';
+  titleEl.textContent = t('subjects.editSubject');
   nameInput.value = subject.name;
   selectedSubjectColor = subject.color || COLORS[0];
   populateGoalForm(subject);
@@ -357,7 +361,7 @@ function closeSubjectModal() {
 
 function saveSubject() {
   const name = document.getElementById('subjectNameInput').value.trim();
-  if (!name) { showToast('Ponle un nombre a la materia'); return; }
+  if (!name) { showToast(t('subjects.nameRequired')); return; }
   const goal = readGoalFromForm();
 
   if (editingSubjectId) {
@@ -394,8 +398,9 @@ function openDeleteSubjectModal(id) {
   const totalHours = (totalMin / 60).toFixed(1);
 
   document.getElementById('deleteSubjectName').textContent = subject.name;
+  document.querySelector('#deleteSubjectModal h3').textContent = t('subjects.deleteTitle', { name: subject.name });
   document.getElementById('deleteSubjectDetail').textContent =
-    `También se eliminarán ${subjSessions.length} sesiones y ${totalHours} h registradas.`;
+    t('subjects.deleteDetail', { sessions: subjSessions.length, hours: totalHours });
   document.getElementById('deleteSubjectModal').classList.remove('hidden');
   setModalOpen(true);
   document.getElementById('deleteSubjectConfirmBtn').focus();

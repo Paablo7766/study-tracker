@@ -1,4 +1,5 @@
 import { showToast } from './ui.js';
+import { t, getSyncLabel } from './i18n.js';
 import { startOfWeekMonday } from './utils.js';
 import {
   isSupabaseConfigured,
@@ -25,7 +26,8 @@ const DEFAULT_SETTINGS = {
   longBreakMin: 15,
   cyclesBeforeLongBreak: 4,
   autoStartBreak: false,
-  dailyGoal: 4
+  dailyGoal: 4,
+  language: 'es'
 };
 
 /** Contadores acumulados: O(1) en render; se reconstruyen solo al migrar/importar/borrar. */
@@ -268,7 +270,7 @@ export function loadData() {
     if (raw) return normalizeLoadedData(JSON.parse(raw));
   } catch (err) {
     console.error('[storage] No se pudieron cargar los datos locales:', err);
-    showToast('Datos locales dañados; se ha iniciado vacío');
+    showToast(t('storage.corrupt'));
   }
   return createEmptyData();
 }
@@ -492,7 +494,7 @@ export async function initCloudSync() {
     pendingCloudSync = true;
     const authError = err?.message?.includes('Auth anónima desactivada');
     setSyncStatus(authError ? 'auth' : 'error');
-    if (authError) showToast('Activa Anonymous sign-ins en Supabase → Authentication → Providers');
+    if (authError) showToast(t('storage.authHint'));
   }
 }
 
@@ -516,7 +518,7 @@ export function saveData({ skipCloud = false } = {}) {
     return true;
   } catch (err) {
     console.error('[storage] No se pudieron guardar los datos:', err);
-    showToast('No se pudieron guardar los datos en este navegador');
+    showToast(t('storage.saveFailed'));
     return false;
   }
 }
@@ -550,7 +552,7 @@ export function exportData() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('Copia de seguridad exportada');
+  showToast(t('storage.exported'));
 }
 
 /**
@@ -561,13 +563,13 @@ export function exportData() {
 export function importData(file, { onSuccess } = {}) {
   const reader = new FileReader();
   reader.onerror = () => {
-    showToast('No se pudo leer el archivo');
+    showToast(t('storage.readFailed'));
   };
   reader.onload = async (e) => {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !Array.isArray(parsed.subjects) || !Array.isArray(parsed.sessions)) {
-        showToast('El archivo no tiene un formato válido');
+        showToast(t('storage.invalidFormat'));
         return;
       }
       const settings =
@@ -580,15 +582,15 @@ export function importData(file, { onSuccess } = {}) {
       migrateSubjectGoals(data.subjects);
       recomputeStats();
       if (!saveData()) {
-        showToast('Los datos se leyeron pero no se pudieron guardar');
+        showToast(t('storage.readNotSaved'));
         return;
       }
       await forceCloudSync();
       onSuccess?.();
-      showToast('Datos importados y guardados correctamente');
+      showToast(t('storage.imported'));
     } catch (err) {
       console.error('[storage] Importación fallida:', err);
-      showToast('No se pudo importar el archivo');
+      showToast(t('storage.importFailed'));
     }
   };
   reader.readAsText(file);
@@ -625,16 +627,7 @@ export async function wipeAllData({ onSuccess } = {}) {
  * @param {{ onDataMutated?: () => void }} [options]
  */
 function updateSyncStatusUI(status) {
-  const tooltips = {
-    synced: 'Sincronizado',
-    syncing: 'Sincronizando…',
-    offline: 'Guardando en local, esperando conexión',
-    error: 'Error de sincronización',
-    auth: 'Activa auth anónima en Supabase',
-    disabled: 'Nube no configurada'
-  };
-
-  const label = tooltips[status] || status;
+  const label = getSyncLabel(status);
 
   document.querySelectorAll('.sync-dot').forEach((dot) => {
     dot.dataset.status = status;
@@ -678,6 +671,6 @@ export function initStorageUI({ onDataMutated } = {}) {
   document.getElementById('wipeDataConfirmBtn').addEventListener('click', async () => {
     await wipeAllData({ onSuccess: onDataMutated });
     document.getElementById('wipeDataModal').classList.add('hidden');
-    showToast('Todos los datos han sido borrados');
+    showToast(t('storage.wiped'));
   });
 }

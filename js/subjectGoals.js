@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 
 /** Normaliza el objetivo de una materia (migra weeklyTargetMin legacy). */
 export function getSubjectGoal(subject) {
@@ -23,7 +24,7 @@ export function getSubjectGoalProgress(subject, sessions, weekStart) {
     const current = goal.completedUnits || 0;
     const target = Math.max(1, goal.targetUnits || 1);
     const pct = Math.min(100, Math.round((current / target) * 100));
-    const unitLabel = goal.unitLabel || 'módulos';
+    const unitLabel = goal.unitLabel || t('subjects.unitsDefault');
     return {
       hasGoal: true,
       pct,
@@ -44,8 +45,8 @@ export function getSubjectGoalProgress(subject, sessions, weekStart) {
       .reduce((a, b) => a + b.durationMin, 0);
     const useHours = targetMin >= 60 && currentMin >= 60;
     const label = useHours
-      ? `${Math.floor(currentMin / 60)} / ${Math.floor(targetMin / 60)} horas hoy`
-      : `${currentMin} / ${targetMin} min hoy`;
+      ? t('goal.hoursToday', { current: Math.floor(currentMin / 60), target: Math.floor(targetMin / 60) })
+      : t('goal.minToday', { current: currentMin, target: targetMin });
     const pct = Math.min(100, Math.round((currentMin / targetMin) * 100));
     return { hasGoal: true, pct, label, pctLabel: `${pct}%` };
   }
@@ -57,7 +58,7 @@ export function getSubjectGoalProgress(subject, sessions, weekStart) {
   return {
     hasGoal: true,
     pct,
-    label: `${currentMin} / ${targetMin} min esta semana`,
+    label: t('goal.minWeek', { current: currentMin, target: targetMin }),
     pctLabel: `${pct}%`
   };
 }
@@ -82,7 +83,7 @@ export function adjustSubjectCompletedUnits(subject, delta) {
       type: 'units',
       targetUnits: target,
       completedUnits: next,
-      unitLabel: goal.unitLabel || 'módulos'
+      unitLabel: goal.unitLabel || t('subjects.unitsDefault')
     };
   } else {
     subject.goal.completedUnits = next;

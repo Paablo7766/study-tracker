@@ -9,11 +9,16 @@ let syncStatus = 'disabled';
 
 const statusListeners = new Set();
 
+const PLACEHOLDER_URL = 'TU-PROYECTO';
+const PLACEHOLDER_KEY = 'tu-anon-key';
+
 export function isSupabaseConfigured() {
+  const url = String(SUPABASE_URL || '').trim();
+  const key = String(SUPABASE_ANON_KEY || '').trim();
   return (
-    Boolean(SUPABASE_URL && SUPABASE_ANON_KEY) &&
-    !SUPABASE_URL.includes('TU-PROYECTO') &&
-    SUPABASE_ANON_KEY !== 'tu-anon-key'
+    Boolean(url && key) &&
+    !url.includes(PLACEHOLDER_URL) &&
+    key !== PLACEHOLDER_KEY
   );
 }
 
